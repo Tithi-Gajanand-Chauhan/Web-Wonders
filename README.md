@@ -10,8 +10,8 @@ The aim of this project is to build an interactive web-based platform that provi
 
 ## Team Members
 
-* Tithi Gajanand Chauhan
 * Hiya Patel
+* Tithi Gajanand Chauhan
 * Mahathi
 * Gayathri
 
