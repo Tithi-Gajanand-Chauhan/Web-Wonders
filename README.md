@@ -1,22 +1,73 @@
-# Web Wonders 2026 - Media & Entertainment Project 🎬
+# Web Wonders 2026 - AI Entertainment Discovery Platform 🎬
 
 ## About the Project
 
-This project is being developed as part of **Web Wonders 2026** under the **Media & Entertainment** theme.
+This project is developed as part of **Web Wonders 2026** under the **Media & Entertainment** theme.
 
-The aim of this project is to build an interactive web-based platform that provides users with an engaging experience in the media and entertainment domain. The project concept, features, and implementation details will be updated as the development progresses.
+The platform aims to solve the problem of entertainment overload by helping users discover suitable movies, TV shows, music, and books through AI-powered recommendations.
+
+Instead of simply showing trending content, the platform focuses on personalized and group-based entertainment discovery, helping users make better decisions about what to watch, listen to, or explore.
+
+---
+
+## Key Features
+
+* 🎥 Multi-platform entertainment discovery
+* 🤖 AI-powered personalized recommendations
+* 👥 Group-based recommendations for friends and family
+* 🗳️ Group voting system for decision making
+* 😊 Mood-based content discovery
+* 💡 AI explanations for recommendations
+* ⭐ Reviews, ratings, and watchlist management
+
+---
+
+## Technology Stack (Tentative)
+
+### Frontend
+
+* React.js
+
+### Backend
+
+* Flask (Python) / Node.js + Express.js
+
+### Database
+
+* MongoDB
+
+### APIs
+
+* TMDB API
+* Gemini API
+
+### Version Control
+
+* Git & GitHub
 
 ---
 
 ## Team Members
 
-* Hiya Patel
-* Tithi Gajanand Chauhan
-* Mahathi
-* Gayathri
+* Gayathri - Authentication Module
+* Mahathi - Content Discovery Module
+* Hiya Patel - Reviews & Watchlist Module
+* Tithi Gajanand Chauhan - Group Recommendation & AI Module
 
 ---
 
 ## Project Status
 
-🚧 Development in progress
+🚧 Currently under development.
+
+* Project idea finalized
+* Modules distributed among team members
+* Technology stack being finalized
+* Development in progress
+
+---
+
+## Competition
+
+**Web Wonders 2026**
+Theme: Media & Entertainment
