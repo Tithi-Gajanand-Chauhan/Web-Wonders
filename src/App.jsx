@@ -5,6 +5,7 @@ import JoinGroup from "./pages/JoinGroup";
 import GroupLobby from "./pages/GroupLobby";
 import Preferences from "./pages/Preferences";
 import Recommendation from "./pages/Recommendation";
+import TestBackend from "./pages/TestBackend";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/lobby" element={<GroupLobby />} />
         <Route path="/preferences" element={<Preferences />} />
         <Route path="/recommendation" element={<Recommendation />} />
+        <Route path="/test" element={<TestBackend/>}/>
       </Routes>
     </BrowserRouter>
   );

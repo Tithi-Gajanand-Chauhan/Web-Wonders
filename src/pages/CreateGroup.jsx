@@ -9,17 +9,23 @@ import { useState } from "react";
   }
   
   
-  function createGroup() {
+  async function createGroup() {
       if(groupName.trim() === "") {
         alert("Please enter a group name.");
         return;
       }
 
-      if(groupCode !== "") {
-        return;
-      }
-      const code = generateCode();
-      setGroupCode(code);
+      const response = await fetch("http://localhost:5000/api/groups/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          groupName: groupName
+        })});
+
+      const data = await response.json();
+      setGroupCode(data.code);
   }
 
   function copyCode() {
@@ -35,13 +41,12 @@ import { useState } from "react";
         type="text"
         placeholder="Enter Group Name"
         value={groupName}
-        onChange={(e) => setGroupName(e.target.value)}
-      />
+        onChange={(e) => setGroupName(e.target.value); setGroupCode("");}/>
 
       <br />
       <br />
 
-      <button onClick={createGroup}>Create Group</button>
+      <button onClick={createGroup} disabled={groupCode!==""}>Create Group</button>
     
       {groupCode && (
         <div>
