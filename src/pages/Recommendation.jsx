@@ -1,14 +1,36 @@
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+
+
 function Recommendation() {
   
-  const movie = {
-    title: "Interstellar",
-    genre: "Sci-Fi, Adventure",
-    language: "English",
-    duration: "2h 49m",
-    rating: "4.8",
-    poster: "https://via.placeholder.com/250x350",
-    reason: "Your group likes Sci-Fi, English movies, and longer watch times."
-  };
+  const [movie, setMovie] = useState(null);
+  const location = useLocation();
+  const { groupCode } = location.state || {};
+
+  if (!groupCode) {
+    return <h2>No Group Data Found</h2>;
+  }
+
+  useEffect(() => {
+    async function getRecommendation() {
+        const response = await fetch("http://localhost:5000/api/recommend", {
+            method: "POST",
+            headers:{
+              "Content-Type":"application/json",
+            },
+            body: JSON.stringify({
+              groupCode: groupCode
+            })
+        });
+        const data = await response.json();
+        setMovie(data.movie);
+    }
+    getRecommendation();}, [groupCode]);
+
+    if (!movie) {
+    return <h2>Loading recommendation...</h2>;
+    }
   
   return (
     <div>

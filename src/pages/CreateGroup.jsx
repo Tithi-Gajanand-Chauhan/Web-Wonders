@@ -1,16 +1,19 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
   function CreateGroup() {
     const [groupName, setGroupName] = useState("");
+    const [username, setUsername] = useState("");
     const [groupCode,setGroupCode] = useState("");
-  
-  function generateCode() {
-      return Math.random().toString(36).substring(2,8).toUpperCase();
-  }
-  
+    const navigate = useNavigate();
   
   async function createGroup() {
-      if(groupName.trim() === "") {
+    if(username.trim() === "") {
+      alert("Please enter your name.");
+      return;
+    }  
+    
+    if(groupName.trim() === "") {
         alert("Please enter a group name.");
         return;
       }
@@ -21,11 +24,20 @@ import { useState } from "react";
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          groupName: groupName
+          groupName: groupName,
+          creatorName: username
         })});
 
       const data = await response.json();
       setGroupCode(data.code);
+      navigate("/lobby", {
+        state: {
+          groupName: groupName,
+          groupCode: data.code,
+          currentUser: username,
+          members : [username]
+        }
+      });
   }
 
   function copyCode() {
@@ -39,9 +51,22 @@ import { useState } from "react";
 
       <input
         type="text"
+        placeholder="Enter Your Name"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
+
+      <br />
+      <br />
+
+      <input
+        type="text"
         placeholder="Enter Group Name"
         value={groupName}
-        onChange={(e) => setGroupName(e.target.value); setGroupCode("");}/>
+        onChange={(e) => {
+          setGroupName(e.target.value); 
+          setGroupCode("");}}
+          />
 
       <br />
       <br />

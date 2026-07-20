@@ -1,24 +1,32 @@
-import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function GroupLobby() {
-  const [members, setMembers] = useState([
-    "Tithi",
-    "Gayathri",
-  ]);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { groupName, groupCode, members, currentUser } = location.state || {};
 
-  const [ready, setReady] = useState(false);
+  if (!groupName || !groupCode) {
+    return <h2>No Group Data Found</h2>;
+  }
 
   function handleReady() {
-    setReady(true);
-  }
+    console.log("button clicked");
+    navigate("/preferences", {
+        state: {
+            groupName: groupName,
+            groupCode: groupCode,
+            currentUser: currentUser
+        }
+    });
+}
 
   return (
     <div>
       <h1>Group Lobby</h1>
 
-      <h2>Movie Night</h2>
+      <h2>{groupName}</h2>
 
-      <p>Group Code: A8K2ZP</p>
+      <p>Group Code: {groupCode}</p>
 
       <h3>Members</h3>
 
@@ -29,7 +37,6 @@ function GroupLobby() {
       <br />
 
       <button onClick={handleReady}>I'm Ready</button>
-      {ready && <p>✅ You are ready!</p>}
     </div>
   );
 }

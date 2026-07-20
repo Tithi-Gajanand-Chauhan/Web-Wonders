@@ -1,25 +1,21 @@
 import { useState } from "react";
+import {useNavigate, useLocation } from "react-router-dom";
 
 function Preferences() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { groupName, groupCode, currentUser } = location.state || {};
+  if (!groupCode || !currentUser) {
+    return <h2>No Group Data Found</h2>;
+}
+  
   const [genres, setGenres] = useState([]);
   const [mood, setMood] = useState("");
   const [language, setLanguage] = useState("");
   const [duration, setDuration] = useState("");
-  const genreList = [
-    "Action",
-    "Comedy",
-    "Sci-Fi",
-    "Romance",
-    "Horror",
-  ];
+  const genreList = ["Action","Comedy","Sci-Fi","Romance","Horror"];
 
-  const moodList = [
-  "Happy",
-  "Relaxed",
-  "Excited",
-  "Emotional",
-  "Sad",
-  ];
+  const moodList = ["Happy","Relaxed","Excited","Emotional","Sad"];
 
   const languageList = [
   "English",
@@ -46,7 +42,7 @@ function Preferences() {
     }
   }
 
-  function savePreferences() {
+  async function savePreferences() {
     if (
       genres.length === 0 ||
       mood === "" ||
@@ -58,20 +54,43 @@ function Preferences() {
   }
 
   const preferences = {
+    user: currentUser,
     genres,
     mood,
     language,
     duration,
   };
 
-  console.log(preferences);
+  const response = await fetch("http://localhost:5000/api/preferences", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+        groupCode: groupCode,
+        preferences: preferences
+    })
+  });
+
+  const data = await response.json();
+
+  console.log(data);
 
   alert("Preferences Saved!");
-}
+
+  navigate("/recommendation", {
+    state: {
+      groupCode: groupCode
+    }
+  });
+  }
 
   return (
     <div>
       <h1>Select Your Preferences</h1>
+
+      <p>Group: {groupName}</p>
+      <p>Code: {groupCode}</p>
 
       <h2>Genres</h2>
 

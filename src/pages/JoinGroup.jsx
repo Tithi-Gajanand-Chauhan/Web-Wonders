@@ -1,10 +1,17 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function JoinGroup() {
   const [groupCode, setGroupCode] = useState("");
-  const [joined, setJoined] = useState(false);
+  const[username,setUsername] = useState("");
+  const navigate = useNavigate();
 
-  function joinGroup() {
+  async function joinGroup() {
+    if (username.trim() === "") {
+     alert("Please enter your name.");
+     return;
+    }
+    
     if (groupCode.trim() === "") {
       alert("Please enter a group code.");
       return;
@@ -15,30 +22,54 @@ function JoinGroup() {
       return;
     }
 
-    setJoined(true);
+    console.log("Sending:", {groupCode: groupCode, username: username});
+
+    const response = await fetch("http://localhost:5000/api/groups/join", {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+          groupCode: groupCode,
+          username : username
+      })
+    });
+
+    const data = await response.json();
+    console.log("Response from backend:", data);
+
+    if (data.success) {
+      navigate("/lobby", {
+        state: {
+          groupName: data.group.groupName,
+          groupCode: data.group.code,
+          currentUser: username,
+          members: data.group.members
+        }
+      });
+    }
+    else {
+      alert(data.message);
+    }
 }
 
   return (
     <div>
       <h1>Join Group</h1>
 
+      <input type="text" placeholder="Enter Your Name" value={username} onChange={(e)=>setUsername(e.target.value)}/>
+
       <input
         type="text"
         placeholder="Enter Group Code"
         value={groupCode}
-        onChange={(e) => setGroupCode(e.target.value)}
+        onChange= {(e) => { setGroupCode(e.target.value); }}
       />
 
       <br />
       <br />
 
       <button onClick={joinGroup}>Join Group</button>
-      {joined && (
-        <div>
-          <h2>Joined Successfully!</h2>
-          <p>Group Code: {groupCode}</p>
-        </div>
-      )}
     </div>
   );
 }
