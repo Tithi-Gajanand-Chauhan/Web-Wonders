@@ -2,7 +2,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 function GroupLobby() {
   const location = useLocation();
-  console.log("Location state:", location.state);
   const navigate = useNavigate();
   const { groupName, groupCode, members, currentUser } = location.state || {};
 
