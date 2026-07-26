@@ -9,7 +9,7 @@ router.get('/popular', async (req, res) => {
     const data = await tmdbService.getPopularMovies(page);
     res.json(data);
   } catch (err) {
-    console.error('Error fetching popular movies:', err.message);
+    console.error("FULL ERROR:", err);
     res.status(500).json({ error: 'Failed to fetch popular movies' });
   }
 });

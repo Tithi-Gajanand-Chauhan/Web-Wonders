@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { getGroupRecommendations } = require("../service/recommendationService");
 
 const groups = new Map();
 
@@ -42,13 +43,21 @@ router.post("/join", (req, res) => {
 
   if (!group) {
     return res.status(404).json({
-      error: "Group not found"
+      success: false,
+      message: "Group not found"
     });
   }
 
   group.members.push(username);
 
-  res.json(group);
+  res.json({
+  success: true,
+  group: {
+    groupName: group.groupName,
+    code: code,
+    members: group.members
+  }
+});
 });
 
 router.post("/preferences", (req, res) => {
@@ -70,35 +79,44 @@ router.post("/preferences", (req, res) => {
   });
 });
 
-router.post("/recommend", (req, res) => {
+router.post("/recommend", async (req,res)=>{
+
   console.log("RECOMMEND ROUTE HIT");
 
-  const { groupCode } = req.body;
+  const {groupCode}=req.body;
 
-  console.log("Group code received:", groupCode);
 
-  const group = groups.get(groupCode);
+  const group=groups.get(groupCode);
 
-  if (!group) {
+
+  if(!group){
     return res.status(404).json({
-      error: "Group not found"
+      error:"Group not found"
     });
   }
 
-  // temporary recommendation
-  const movie = {
-    title: "Interstellar",
-    poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
-    genre: "Sci-Fi",
-    language: "English",
-    duration: "2h 49min",
-    rating: 8.7,
-    reason: "Recommended because your group likes Sci-Fi and emotional movies."
-  };
 
-  res.json({
-    movie
-  });
+  try{
+
+    const recommendations =
+      await getGroupRecommendations(
+        group.preferences
+      );
+
+
+    res.json(recommendations);
+
+
+  }catch(error){
+
+    console.log(error);
+
+    res.status(500).json({
+      error:"Failed to generate recommendation"
+    });
+
+  }
+
 });
 
 module.exports = router;
