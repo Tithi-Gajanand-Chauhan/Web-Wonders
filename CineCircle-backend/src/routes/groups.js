@@ -1,17 +1,31 @@
 const express = require("express");
 const router = express.Router();
+
 const { getGroupRecommendations } = require("../service/recommendationService");
 
 const groups = new Map();
 
+
 function generateCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
+  let code;
+
+  do {
+    code = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+
+  } while (groups.has(code));
+
+  return code;
 }
 
 
-// Create group
+// Create Group
 router.post("/create", (req, res) => {
+
   const { groupName, creatorName } = req.body;
+
 
   if (!groupName || !creatorName) {
     return res.status(400).json({
@@ -19,7 +33,9 @@ router.post("/create", (req, res) => {
     });
   }
 
+
   const code = generateCode();
+
 
   groups.set(code, {
     groupName,
@@ -27,66 +43,72 @@ router.post("/create", (req, res) => {
     preferences: []
   });
 
+
   res.json({
     code,
     groupName,
     members: [creatorName]
   });
+
 });
 
 
-// Join group
-router.post("/join", (req, res) => {
+
+// Join Group
+router.post("/join", (req,res)=>{
+
   const { code, username } = req.body;
 
-  const group = groups.get(code);
 
-  if (!group) {
-    return res.status(404).json({
-      success: false,
-      message: "Group not found"
+  if(!code || !username){
+    return res.status(400).json({
+      message:"Missing details"
     });
   }
 
-  group.members.push(username);
+
+  const group = groups.get(code.toUpperCase());
+
+
+  if(!group){
+    return res.status(404).json({
+      success:false,
+      message:"Group not found"
+    });
+  }
+
+
+
+  if(!group.members.includes(username)){
+    group.members.push(username);
+  }
+
+
 
   res.json({
-  success: true,
-  group: {
-    groupName: group.groupName,
-    code: code,
-    members: group.members
-  }
-});
+
+    success:true,
+
+    group:{
+      groupName:group.groupName,
+      code,
+      members:group.members
+    }
+
+  });
+
 });
 
-router.post("/preferences", (req, res) => {
-  const { groupCode, preferences } = req.body;
+
+
+
+// Save Preferences
+router.post("/preferences",(req,res)=>{
+
+  const {groupCode, preferences}=req.body;
+
 
   const group = groups.get(groupCode);
-
-  if (!group) {
-    return res.status(404).json({
-      error: "Group not found",
-    });
-  }
-
-  group.preferences.push(preferences);
-
-  res.json({
-    message: "Preferences saved successfully",
-    group,
-  });
-});
-
-router.post("/recommend", async (req,res)=>{
-
-  console.log("RECOMMEND ROUTE HIT");
-
-  const {groupCode}=req.body;
-
-
-  const group=groups.get(groupCode);
 
 
   if(!group){
@@ -94,6 +116,41 @@ router.post("/recommend", async (req,res)=>{
       error:"Group not found"
     });
   }
+
+
+  group.preferences.push(preferences);
+
+
+  res.json({
+    message:"Preferences saved successfully",
+    group
+  });
+
+});
+
+
+
+
+// Generate Recommendation
+router.post("/recommend",async(req,res)=>{
+
+
+  console.log("RECOMMEND ROUTE HIT");
+
+
+  const {groupCode}=req.body;
+
+
+  const group=groups.get(groupCode);
+
+
+
+  if(!group){
+    return res.status(404).json({
+      error:"Group not found"
+    });
+  }
+
 
 
   try{
@@ -107,9 +164,12 @@ router.post("/recommend", async (req,res)=>{
     res.json(recommendations);
 
 
-  }catch(error){
+  }
+
+  catch(error){
 
     console.log(error);
+
 
     res.status(500).json({
       error:"Failed to generate recommendation"
@@ -117,6 +177,9 @@ router.post("/recommend", async (req,res)=>{
 
   }
 
+
 });
+
+
 
 module.exports = router;

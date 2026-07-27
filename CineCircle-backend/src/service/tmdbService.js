@@ -1,37 +1,16 @@
 const axios = require("axios");
 const dns = require("dns");
-const https = require("https");
 
 dns.setDefaultResultOrder("ipv4first");
 
-const BASE_URL = "https://api.themoviedb.org/3";
 const TOKEN = process.env.TMDB_TOKEN;
 
 console.log("TMDB TOKEN loaded:", TOKEN ? "YES" : "NO");
 
 
-// HTTPS agent
-const agent = new https.Agent({
-  keepAlive: true,
-});
-
-
-// Axios TMDB client
-const tmdbClient = axios.create({
-  baseURL: BASE_URL,
-  timeout: 30000,
-  httpsAgent: agent,
-  headers: {
-    Authorization: `Bearer ${TOKEN}`,
-    accept: "application/json",
-  },
-});
-
-
-// Simple cache
 const cache = new Map();
 
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 
 
@@ -99,10 +78,17 @@ async function fetchFromTMDB(endpoint, params = {}) {
     );
 
 
-    const response = await tmdbClient.get(endpoint, {
-      params,
-    });
-
+   const response = await axios.get(
+  `https://api.themoviedb.org/3${endpoint}`,
+  {
+    params,
+    headers: {
+      Authorization: `Bearer ${TOKEN}`,
+      accept: "application/json",
+    },
+    timeout: 30000,
+  }
+);
 
 
     setCache(cacheKey, response.data);
