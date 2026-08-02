@@ -1,9 +1,14 @@
 const axios = require("axios");
 const dns = require("dns");
+const https = require("https");
 
 dns.setDefaultResultOrder("ipv4first");
 
 const TOKEN = process.env.TMDB_TOKEN;
+const httpsAgent = new https.Agent({
+  keepAlive: true,
+  family: 4
+});
 
 console.log("TMDB TOKEN loaded:", TOKEN ? "YES" : "NO");
 
@@ -86,6 +91,7 @@ async function fetchFromTMDB(endpoint, params = {}) {
       Authorization: `Bearer ${TOKEN}`,
       accept: "application/json",
     },
+    httpsAgent,
     timeout: 30000,
   }
 );

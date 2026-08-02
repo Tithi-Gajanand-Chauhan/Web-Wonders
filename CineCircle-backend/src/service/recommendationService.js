@@ -58,11 +58,6 @@ async function getCandidateMovies(groupPreferences) {
       )
     )
   ];
-
-
-
-
-
   if (
     languages.length === 1 &&
     languages[0] === "Hindi"
@@ -144,6 +139,7 @@ async function getCandidateMovies(groupPreferences) {
 async function getGroupRecommendations(groupPreferences) {
 
 
+  console.log("🔥 USING NEW RECOMMENDATION SERVICE FILE 🔥");
 
   console.log(
     "GROUP PREFERENCES RECEIVED:",
@@ -211,6 +207,13 @@ RULES:
 - Follow language preferences.
 - If languages conflict, select the best compromise.
 - Explain why each movie suits the group.
+
+STRICT RULES:
+- You MUST select movies ONLY from the Available TMDB Movies list.
+- Do NOT create your own movie names.
+- Do NOT recommend movies outside the provided list.
+- The movieId must exactly match the TMDB movie id.
+- Respect user's requested genres. If user selects Horror and Sci-Fi, recommendations must belong to those genres.
 
 
 Group Preferences:
@@ -296,24 +299,143 @@ Return ONLY JSON:
         .trim();
 
 
+        const result = JSON.parse(cleanText);
+        console.log(
+  "GEMINI RESULT:",
+  JSON.stringify(result, null, 2)
+);
 
 
-
-    const result =
-      JSON.parse(cleanText);
-
-
+console.log(
+  "Gemini recommendation successful"
+);
 
 
+// Gemini returned empty recommendations
+if (
+  !result.recommendations ||
+  result.recommendations.length === 0
+) {
+
+  console.log(
+    "Gemini returned empty list, using TMDB fallback"
+  );
 
 
-    console.log(
-      "Gemini recommendation successful"
-    );
+  return {
+
+    groupCompatibilityScore: 75,
+
+    negotiationSummary:
+      "CineCircle selected movies by balancing group preferences.",
 
 
+    recommendations: candidatePool
+      .slice(0,5)
+      .map(movie => ({
 
-    return result;
+        movieId: movie.id,
+
+        title: movie.title,
+
+        poster: movie.poster,
+
+        explainableAIReason:
+          "Recommended based on group genres, language preference and popularity.",
+
+
+        matchedMembers:
+          groupPreferences.map(
+            user => user.user
+          )
+
+      }))
+
+  };
+
+}
+
+
+// Validate Gemini recommendations with TMDB candidate pool
+
+const validMovieIds = candidatePool.map(
+  movie => String(movie.id)
+);
+
+console.log(
+  "Candidate IDs:",
+  validMovieIds
+);
+
+result.recommendations.forEach(movie => {
+
+  console.log(
+    "Gemini Movie:",
+    movie.title,
+    movie.movieId,
+    typeof movie.movieId
+  );
+
+});
+
+
+const filteredRecommendations =
+  result.recommendations.filter(movie =>
+    validMovieIds.includes(String(movie.movieId))
+  );
+
+
+console.log(
+  "VALIDATED MOVIES:",
+  filteredRecommendations
+);
+
+if (filteredRecommendations.length === 0) {
+
+  console.log(
+    "No valid Gemini movies found, using TMDB fallback"
+  );
+
+  return {
+
+    groupCompatibilityScore: 75,
+
+    negotiationSummary:
+      "CineCircle selected movies by balancing group preferences.",
+
+
+    recommendations: candidatePool
+      .slice(0,5)
+      .map(movie => ({
+
+        movieId: movie.id,
+
+        title: movie.title,
+
+        poster: movie.poster,
+
+        explainableAIReason:
+          "Recommended based on group preferences.",
+
+
+        matchedMembers:
+          groupPreferences.map(
+            user => user.user
+          )
+
+      }))
+
+  };
+
+}
+
+
+return {
+  ...result,
+  recommendations: filteredRecommendations
+};
+
+
 
 
 

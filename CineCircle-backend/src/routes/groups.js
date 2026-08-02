@@ -40,7 +40,10 @@ router.post("/create", (req, res) => {
   groups.set(code, {
     groupName,
     members: [creatorName],
-    preferences: []
+    preferences: [],
+    votes: {},
+    locked: false,
+    recommendations: null
   });
 
 
@@ -77,6 +80,13 @@ router.post("/join", (req,res)=>{
     });
   }
 
+  if(group.locked){
+  return res.status(400).json({
+    success:false,
+    message:"This group has already started recommendations."
+  });
+}
+
 
 
   if(!group.members.includes(username)){
@@ -99,16 +109,29 @@ router.post("/join", (req,res)=>{
 
 });
 
+// Get current group state (members, status, preferences count)
+router.get("/:code", (req, res) => {
+  const group = groups.get(req.params.code.toUpperCase());
 
+  if (!group) {
+    return res.status(404).json({ success: false, error: "Group not found" });
+  }
 
+  res.json({
+    success: true,
+    groupName: group.groupName,
+    members: group.members,
+    preferencesCount: group.preferences.length,
+    votes: group.votes
+  });
+});
 
-// Save Preferences
 router.post("/preferences",(req,res)=>{
 
   const {groupCode, preferences}=req.body;
 
 
-  const group = groups.get(groupCode);
+  const group = groups.get(groupCode.toUpperCase());
 
 
   if(!group){
@@ -117,9 +140,20 @@ router.post("/preferences",(req,res)=>{
     });
   }
 
+  const index = group.preferences.findIndex(
+  (p) => p.user === preferences.user
+);
 
-  group.preferences.push(preferences);
+if (index !== -1) {
+  group.preferences[index] = preferences; // Update existing user's preferences
+} else {
+  group.preferences.push(preferences); // Add new user
+}
 
+  console.log(
+  "PREFERENCES AFTER SAVE:",
+  JSON.stringify(group.preferences, null, 2)
+);
 
   res.json({
     message:"Preferences saved successfully",
@@ -130,19 +164,45 @@ router.post("/preferences",(req,res)=>{
 
 
 
+router.get("/status/:groupCode", (req, res) => {
 
-// Generate Recommendation
+  const group = groups.get(
+    req.params.groupCode.toUpperCase()
+  );
+
+  if (!group) {
+    return res.status(404).json({
+      error: "Group not found"
+    });
+  }
+
+  res.json({
+
+    totalMembers: group.members.length,
+
+    submittedPreferences:
+      group.preferences.length,
+
+    everyoneReady:
+      group.preferences.length ===
+      group.members.length,
+
+    locked: group.locked  
+
+  });
+
+});
+
+
+
 router.post("/recommend",async(req,res)=>{
 
 
   console.log("RECOMMEND ROUTE HIT");
 
-
   const {groupCode}=req.body;
 
-
-  const group=groups.get(groupCode);
-
+  const group=groups.get(groupCode.toUpperCase());
 
 
   if(!group){
@@ -150,21 +210,77 @@ router.post("/recommend",async(req,res)=>{
       error:"Group not found"
     });
   }
+  
+  console.log(
+  "GROUP PREFERENCES:",
+  JSON.stringify(group.preferences, null, 2)
+);
 
 
 
   try{
 
-    const recommendations =
-      await getGroupRecommendations(
-        group.preferences
-      );
+
+  // If recommendations already generated
+  if (
+  group.recommendations &&
+  group.recommendations.recommendations &&
+  group.recommendations.recommendations.length > 0
+) {
+
+    console.log("Returning saved recommendations");
+
+    return res.json(group.recommendations);
+
+}
 
 
-    res.json(recommendations);
+
+  console.log("Generating new recommendations...");
+
+  if(group.generating){
+ return res.json({
+   message:"Already generating"
+ });
+}
+
+group.generating=true;
+
+  const recommendations =
+    await getGroupRecommendations(
+      group.preferences
+    );
+
+    console.log(
+  "FINAL RECOMMENDATIONS BEFORE SAVE:",
+  recommendations
+);
+
+  if(
+  !recommendations.recommendations ||
+  recommendations.recommendations.length === 0
+){
+  console.log("Empty recommendations received, not saving");
+  return res.json({
+    recommendations
+  });
+}
 
 
-  }
+
+  // Save recommendations
+  group.recommendations = recommendations;
+
+
+  // Lock group after AI starts
+  group.locked = true;
+
+
+
+  res.json (recommendations);
+
+
+}
 
   catch(error){
 
@@ -177,6 +293,117 @@ router.post("/recommend",async(req,res)=>{
 
   }
 
+
+});
+
+router.get("/winner/:groupCode", (req, res) => {
+  const group = groups.get(req.params.groupCode.toUpperCase());
+
+  if (!group) {
+    return res.status(404).json({ error: "Group not found" });
+  }
+
+  let winner = null;
+  let maxVotes = -1;
+  let isTie = false;
+
+  Object.keys(group.votes).forEach((movieId) => {
+
+  const votes = group.votes[movieId].users.length;
+
+
+  if (votes > maxVotes) {
+
+    maxVotes = votes;
+
+    winner = {
+      movieId,
+      title: group.votes[movieId].title
+    };
+
+    isTie = false;
+
+  } 
+  else if (votes === maxVotes && maxVotes > 0) {
+
+    isTie = true;
+
+  }
+
+});
+
+  res.json({
+    movieId: winner?.movieId || null,
+    title: winner?.title || "No winner",
+    votes: maxVotes > -1 ? maxVotes : 0,
+    isTie
+  });
+});
+
+// Vote for a movie
+router.post("/vote", (req, res) => {
+
+  const {
+    groupCode,
+    movieId,
+    movieTitle,
+    username
+  } = req.body;
+
+
+  const group = groups.get(
+    groupCode.toUpperCase()
+  );
+
+
+  if (!group) {
+    return res.status(404).json({
+      error: "Group not found"
+    });
+  }
+
+
+ if (!group.votes[movieId]) {
+
+  group.votes[movieId] = {
+    title: movieTitle,
+    users: []
+  };
+
+}
+
+
+// Avoid duplicate voting
+if (!group.votes[movieId].users.includes(username)) {
+
+  group.votes[movieId].users.push(username);
+
+}
+
+
+res.json({
+
+  message: "Vote added successfully",
+
+  votes: group.votes[movieId].users.length
+
+});
+});
+
+
+router.get("/group/:groupCode", (req, res) => {
+
+  const group = groups.get(
+    req.params.groupCode.toUpperCase()
+  );
+
+  if (!group) {
+    return res.status(404).json({
+      error: "Group not found"
+    });
+  }
+
+  res.json(group);
 
 });
 
