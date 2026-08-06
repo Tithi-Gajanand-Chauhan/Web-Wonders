@@ -283,6 +283,7 @@ function WatchPartyModal({ isOpen, onClose }) {
             </button>
           </form>
         )}
+
       </div>
     </div>
   );

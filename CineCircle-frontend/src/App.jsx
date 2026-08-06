@@ -13,6 +13,7 @@ import JoinGroup from './pages/JoinGroup';
 import GroupLobby from './pages/GroupLobby';
 import Preferences from './pages/Preferences';
 import Recommendation from './pages/Recommendation';
+
 import './App.css';
 
 function App() {
@@ -133,6 +134,7 @@ function App() {
         <Route path="/lobby" element={<GroupLobby />} />
         <Route path="/preferences" element={<Preferences />} />
         <Route path="/recommendation" element={<Recommendation />} />
+
       </Routes>
 
       {/* Video Trailer Playback Modal */}

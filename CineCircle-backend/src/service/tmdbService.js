@@ -215,6 +215,7 @@ function mockFetchFromTMDB(endpoint, params) {
   };
 }
 
+
 // Simple in-memory cache: key -> { data, expiresAt }
 const cache = new Map();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -275,6 +276,7 @@ async function fetchFromTMDB(endpoint, params = {}) {
   }
   setCache(cacheKey, data);
   return data;
+
 }
 
 async function getPopularMovies(page = 1) {
@@ -387,4 +389,5 @@ module.exports = {
   getGenres,
   getTrendingMovies,
   getMoviesByLanguage,
+
 };
