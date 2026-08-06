@@ -144,6 +144,10 @@ router.post("/preferences", async (req, res) => {
       group.preferences.push(preferences);
     }
 
+    // Invalidate cached recommendations and unlock the group since preferences have changed
+    group.recommendations = null;
+    group.locked = false;
+
     await db.saveGroup(groupCode, group);
 
     console.log(
