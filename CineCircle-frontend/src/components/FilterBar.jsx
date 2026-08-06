@@ -25,7 +25,7 @@ function FilterBar({
           onChange={(e) => setGenreFilter(e.target.value)}
         >
           <option value="">All</option>
-          {genres.map((g) => (
+          {(genres || []).map((g) => (
             <option key={g.id} value={g.id}>
               {g.name}
             </option>

@@ -8,6 +8,8 @@ import {
   getRecentMovies,
   getKoreanMovies,
   getChineseMovies,
+  getHindiMovies,
+  getGujaratiMovies,
   getGenres,
 } from '../services/api';
 
@@ -28,31 +30,62 @@ function Home() {
 
   useEffect(() => {
     async function fetchAll() {
-      try {
-        setLoading(true);
-        const [popular, recent, korean, chinese, genreData] = await Promise.all([
-          getPopularMovies(),
-          getRecentMovies(),
-          getKoreanMovies(),
-          getChineseMovies(),
-          getGenres(),
-        ]);
+  try {
+    setLoading(true);
 
-        setRows({
-          popular: popular.results || [],
-          recent: recent.results || [],
-          korean: korean.results || [],
-          chinese: chinese.results || [],
-        });
-        setGenres(genreData.genres || []);
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch movies:', err);
-        setError('Failed to load movies. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    }
+    const results = await Promise.allSettled([
+      getPopularMovies(),
+      getRecentMovies(),
+      getKoreanMovies(),
+      getChineseMovies(),
+      getHindiMovies(),
+      getGujaratiMovies(),
+      getGenres(),
+    ]);
+
+    const [
+      popular,
+      recent,
+      korean,
+      chinese,
+      genreData,
+    ] = results;
+
+    setRows({
+      popular:
+        popular.status === "fulfilled"
+          ? popular.value.results
+          : [],
+
+      recent:
+        recent.status === "fulfilled"
+          ? recent.value.results
+          : [],
+
+      korean:
+        korean.status === "fulfilled"
+          ? korean.value.results
+          : [],
+
+      chinese:
+        chinese.status === "fulfilled"
+          ? chinese.value.results
+          : [],
+    });
+
+    setGenres(
+      genreData.status === "fulfilled"
+        ? genreData.value.genres
+        : []
+    );
+
+    setError(null);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}
 
     fetchAll();
   }, []);

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import FilterBar from '../components/FilterBar';
 import MovieCard from '../components/MovieCard';
-import { getPopularMovies, getGenres } from '../services/api';
+import { getPopularMovies, getGenres } from '../services/movieApi';
 
 function Browse() {
   const [movies, setMovies] = useState([]);
@@ -21,6 +21,8 @@ function Browse() {
           getPopularMovies(),
           getGenres(),
         ]);
+        console.log("MOVIE DATA:", movieData);
+        console.log("GENRE DATA:", genreData);
         setMovies(movieData.results || []);
         setGenres(genreData.genres || []);
         setError(null);

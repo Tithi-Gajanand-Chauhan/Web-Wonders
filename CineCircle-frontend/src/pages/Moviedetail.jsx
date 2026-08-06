@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getMovieDetails } from '../services/api';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { getMovieDetails } from '../services/movieApi';
 
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 const BACKDROP_BASE_URL = 'https://image.tmdb.org/t/p/original';
@@ -8,47 +8,89 @@ const BACKDROP_BASE_URL = 'https://image.tmdb.org/t/p/original';
 function MovieDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    async function fetchMovie() {
-      try {
-        setLoading(true);
-        setNotFound(false);
-        const data = await getMovieDetails(id);
-        setMovie(data);
-      } catch (err) {
-        if (err.response?.status === 404) {
-          setNotFound(true);
-        } else {
-          console.error('Failed to fetch movie details:', err);
-        }
-      } finally {
-        setLoading(false);
+
+  async function fetchMovie() {
+
+    try {
+
+      setLoading(true);
+      setNotFound(false);
+      setError(false);
+      setMovie(null);
+
+      const data = await getMovieDetails(id);
+
+      setMovie(data);
+
+    } catch (err) {
+
+      console.error("Failed to fetch movie details:", err);
+
+      if (err.response?.status === 404) {
+        setNotFound(true);
+      } else {
+        setError(true);
       }
+
+    } finally {
+
+      setLoading(false);
+
     }
-    fetchMovie();
-    window.scrollTo(0, 0);
-  }, [id]);
+  }
+
+  fetchMovie();
+  window.scrollTo(0,0);
+
+}, [id]);
 
   if (loading) {
     return <div className="status-message">Loading movie...</div>;
   }
 
-  if (notFound || !movie) {
-    return (
-      <div className="status-message">
-        Movie not found.
-        <br />
-        <button className="back-btn" onClick={() => navigate('/')}>
-          Go back home
-        </button>
-      </div>
-    );
-  }
+  if (error) {
+  return (
+    <div className="status-message">
+      Unable to load movie details.
+      <br />
+      Please try again.
+      <br />
+
+      <button 
+        className="back-btn"
+        onClick={() => window.location.reload()}
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
+
+if (notFound || !movie) {
+  return (
+    <div className="status-message">
+      Movie not found.
+      <br />
+
+      <button 
+        className="back-btn" 
+        onClick={() => navigate('/')}
+      >
+        Go back home
+      </button>
+
+    </div>
+  );
+}
 
   const year = movie.release_date ? movie.release_date.split('-')[0] : 'N/A';
   const hours = Math.floor((movie.runtime || 0) / 60);
@@ -66,6 +108,30 @@ function MovieDetail() {
           <div className="detail-backdrop-fade" />
         </div>
       )}
+
+      
+      <button
+  onClick={() =>
+    navigate("/recommendation", {
+      state: location.state
+    })
+  }
+  style={{
+    position: "fixed",
+    top: "20px",
+    left: "20px",
+    zIndex: 99999,
+    backgroundColor: "#2563eb",
+    color: "white",
+    padding: "10px 20px",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "16px",
+  }}
+>
+  ← Back to Recommendations
+</button>
 
       <div className="detail-content">
         <div className="detail-main">

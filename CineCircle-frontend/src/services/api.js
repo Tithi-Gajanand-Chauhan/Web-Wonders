@@ -36,6 +36,16 @@ export const getChineseMovies = async (page = 1) => {
   return response.data;
 };
 
+export const getHindiMovies = async (page = 1) => {
+  const response = await api.get('/movies/hindi', { params: { page } });
+  return response.data;
+};
+
+export const getGujaratiMovies = async (page = 1) => {
+  const response = await api.get('/movies/gujarati', { params: { page } });
+  return response.data;
+};
+
 export const getGenres = async () => {
   const response = await api.get('/movies/genres');
   return response.data;
