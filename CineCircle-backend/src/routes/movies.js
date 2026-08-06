@@ -110,6 +110,18 @@ router.get('/trending', async (req, res) => {
   }
 });
 
+// GET /api/movies/:id/videos
+router.get('/:id/videos', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = await tmdbService.getMovieVideos(id);
+    res.json(data);
+  } catch (err) {
+    console.error(`Error fetching videos for movie ${req.params.id}:`, err.message);
+    res.status(500).json({ trailerKey: null, error: 'Failed to fetch movie videos' });
+  }
+});
+
 // GET /api/movies/:id
 router.get('/:id', async (req, res) => {
   try {

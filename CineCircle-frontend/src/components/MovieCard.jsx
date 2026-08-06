@@ -1,14 +1,16 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTrailerIframeUrl } from '../services/api';
+import { getMovieTrailerKey, getTrailerIframeUrl, fetchMovieTrailer } from '../services/api';
 
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w342';
+const HOVER_DELAY_MS = 350;
 
 function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isSaved }) {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
-  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+  const [trailerSrc, setTrailerSrc] = useState(null);
   const hoverTimer = useRef(null);
+  const isMouseInsideRef = useRef(false);
 
   const posterUrl = movie.poster_path
     ? (movie.poster_path.startsWith('/') ? `${IMAGE_BASE_URL}${movie.poster_path}` : movie.poster_path)
@@ -17,19 +19,44 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
   const year = movie.release_date ? movie.release_date.split('-')[0] : '2026';
 
   const handleMouseEnter = () => {
-    hoverTimer.current = setTimeout(() => {
+    isMouseInsideRef.current = true;
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+
+    hoverTimer.current = setTimeout(async () => {
+      if (!isMouseInsideRef.current) return;
       setIsHovered(true);
-      setIsPlayingVideo(true);
-    }, 350);
+
+      // 1. Do we already know the correct trailer (curated movie / TRAILER_MAP)?
+      const knownKey = getMovieTrailerKey(movie);
+      if (knownKey) {
+        if (isMouseInsideRef.current) {
+          setTrailerSrc(getTrailerIframeUrl(movie, { autoplay: 1, mute: 1, loop: 1 }));
+        }
+        return;
+      }
+
+      // 2. Otherwise fetch the real trailer from the backend (TMDB videos endpoint)
+      const fetchedKey = await fetchMovieTrailer(movie.id);
+      if (fetchedKey && isMouseInsideRef.current) {
+        setTrailerSrc(
+          getTrailerIframeUrl({ ...movie, trailer_key: fetchedKey }, { autoplay: 1, mute: 1, loop: 1 })
+        );
+      }
+      // if fetchedKey is null, trailerSrc stays null -> poster just stays visible, no wrong video
+    }, HOVER_DELAY_MS);
   };
 
   const handleMouseLeave = () => {
-    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    isMouseInsideRef.current = false;
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
     setIsHovered(false);
-    setIsPlayingVideo(false);
+    setTrailerSrc(null); // unmount iframe so playback actually stops
   };
 
-  const previewIframeSrc = getTrailerIframeUrl(movie, { autoplay: 1, mute: 1, loop: 1 });
+  const isPlayingVideo = Boolean(trailerSrc);
 
   return (
     <div
@@ -37,7 +64,6 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Giant Netflix-style outlined number for Top 10 rows */}
       {isTop10 && rank && (
         <div className="top10-rank-number">
           {rank}
@@ -46,30 +72,27 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
 
       <div className="movie-card">
         <div className="poster-wrapper">
-          {/* Default Poster Image */}
           <img
             src={posterUrl}
             alt={movie.title}
             className={`movie-poster-img ${isPlayingVideo ? 'fade-out' : ''}`}
           />
 
-          {/* Badge Tag */}
           {movie.badge && <span className="poster-badge-tag">{movie.badge}</span>}
 
-          {/* Live Video Trailer Preview on Hover */}
-          {isHovered && (
+          {isHovered && trailerSrc && (
             <div className="trailer-preview-wrapper">
               <iframe
-                src={previewIframeSrc}
+                src={trailerSrc}
                 title={`${movie.title} Preview`}
                 className="trailer-preview-iframe"
                 allow="autoplay; encrypted-media"
+                frameBorder="0"
               />
             </div>
           )}
         </div>
 
-        {/* Hover Description Overlay Dropdown */}
         {isHovered && (
           <div className="hover-details-panel">
             <div className="hover-action-bar">

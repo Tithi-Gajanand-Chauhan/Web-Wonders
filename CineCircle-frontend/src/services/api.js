@@ -52,32 +52,52 @@ const DIVERSE_TRAILERS = [
   'gCcx85zbxz4', 'XdKzUbAiswE', '9ix7TUGVYIo', 'ByXuk9QqQkk'
 ];
 
+// Only returns a trailer key if we actually know it's correct.
+// Returns null instead of guessing (no more wrong trailers).
 export function getMovieTrailerKey(movie) {
-  if (!movie) return 'JfVOs4VSpmA';
-  
-  // 1. Check direct trailer_key property
-  if (movie.trailer_key && typeof movie.trailer_key === 'string' && !movie.trailer_key.endsWith('.mp4') && movie.trailer_key.length >= 8) {
+  if (!movie) return null;
+  if (typeof movie === 'string') {
+    return movie.length >= 8 && !movie.includes('.') ? movie : null;
+  }
+
+  // 1. Direct trailer_key on the movie object (real YouTube video ID only)
+  if (
+    movie.trailer_key &&
+    typeof movie.trailer_key === 'string' &&
+    movie.trailer_key.length >= 8 &&
+    !movie.trailer_key.includes('.') // rules out accidental file paths
+  ) {
     return movie.trailer_key;
   }
 
-  // 2. Check map by movie ID
+  // 2. Known-good curated map
   if (movie.id && TRAILER_MAP[movie.id]) {
     return TRAILER_MAP[movie.id];
   }
 
-  // 3. Fallback: Dynamic YouTube search for exact movie title trailer (never plays wrong movie)
-  const title = movie.title || movie.name || movie.original_title || 'Movie';
-  return `search:${encodeURIComponent(title + ' official trailer')}`;
+  // 3. No confirmed trailer — caller should show the poster instead
+  return null;
 }
 
-export function getTrailerIframeUrl(movie, { autoplay = 1, mute = 0, loop = 0 } = {}) {
+export function getTrailerIframeUrl(movie, { autoplay = 1, mute = 1, loop = 1 } = {}) {
   const key = getMovieTrailerKey(movie);
-  if (key.startsWith('search:')) {
-    const query = key.replace('search:', '');
-    return `https://www.youtube.com/embed?listType=search&list=${query}&autoplay=${autoplay}&mute=${mute}&enablejsapi=1&rel=0`;
-  }
-  return `https://www.youtube.com/embed/${key}?autoplay=${autoplay}&mute=${mute}&enablejsapi=1&rel=0${loop ? `&loop=1&playlist=${key}` : ''}`;
+  if (!key) return null;
+
+  return `https://www.youtube.com/embed/${key}?autoplay=${autoplay}&mute=${mute}&controls=0&modestbranding=1&rel=0&enablejsapi=1${
+    loop ? `&loop=1&playlist=${key}` : ''
+  }`;
 }
+
+// Fetches the real trailer from your backend (TMDB /movie/{id}/videos),
+// for movies that aren't in CURATED_MOVIES / TRAILER_MAP.
+export const fetchMovieTrailer = async (movieId) => {
+  try {
+    const { data } = await api.get(`/movies/${movieId}/videos`);
+    return data?.trailerKey || null;
+  } catch (e) {
+    return null;
+  }
+};
 
 const CURATED_MOVIES = [
   {

@@ -33,6 +33,11 @@ function setCache(key, data) {
   cache.set(key, { data, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 400;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function fetchFromTMDB(endpoint, params = {}) {
   const cacheKey = getCacheKey(endpoint, params);
   const cached = getFromCache(cacheKey);
@@ -41,9 +46,23 @@ async function fetchFromTMDB(endpoint, params = {}) {
     return cached;
   }
 
-  const response = await tmdbClient.get(endpoint, { params });
-  setCache(cacheKey, response.data);
-  return response.data;
+  let lastError;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await tmdbClient.get(endpoint, { params });
+      setCache(cacheKey, response.data);
+      return response.data;
+    } catch (err) {
+      lastError = err;
+      console.warn(
+        `[TMDB retry ${attempt}/${MAX_RETRIES}] ${endpoint} failed (${err.code || err.message}). Retrying...`
+      );
+      if (attempt < MAX_RETRIES) {
+        await sleep(RETRY_DELAY_MS * attempt);
+      }
+    }
+  }
+  throw lastError;
 }
 
 async function getPopularMovies(page = 1) {
@@ -59,6 +78,32 @@ async function getMovieDetails(movieId) {
     append_to_response: 'credits',
   });
 }
+
+async function getMovieVideos(movieId) {
+  try {
+    const data = await fetchFromTMDB(`/movie/${movieId}/videos`, {});
+    if (!data || !Array.isArray(data.results)) {
+      return { trailerKey: null };
+    }
+
+    const youtubeTrailers = data.results.filter(
+      (video) => video.site === 'YouTube' && video.type === 'Trailer'
+    );
+
+    if (youtubeTrailers.length === 0) {
+      return { trailerKey: null };
+    }
+
+    const officialTrailer = youtubeTrailers.find((v) => v.official === true);
+    const selectedTrailer = officialTrailer || youtubeTrailers[0];
+
+    return { trailerKey: selectedTrailer.key || null };
+  } catch (err) {
+    console.error(`Error in getMovieVideos for ID ${movieId}:`, err.message);
+    return { trailerKey: null };
+  }
+}
+
 async function getRecentMovies(page = 1) {
   return fetchFromTMDB('/discover/movie', {
     page,
@@ -111,6 +156,7 @@ module.exports = {
   getPopularMovies,
   searchMovies,
   getMovieDetails,
+  getMovieVideos,
   getRecentMovies,
   getKoreanMovies,
   getChineseMovies,

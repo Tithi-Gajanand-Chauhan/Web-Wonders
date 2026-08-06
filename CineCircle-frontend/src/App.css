@@ -1182,3 +1182,22 @@
   .poster-wrapper { height: 200px; }
   .hero-bottom-right-badge { display: none; }
 }
+.movie-card {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.movie-card-poster,
+.movie-card-trailer {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.movie-card-trailer {
+  border: none;
+  pointer-events: none; /* stops YT controls from stealing hover */
+}
