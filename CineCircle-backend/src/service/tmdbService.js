@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'https://api.themoviedb.org/3';
+const BASE_URL = 'https://api.tmdb.org/3';
 const TOKEN = process.env.TMDB_API_TOKEN || process.env.TMDB_TOKEN;
 
 const MOCK_MOVIES = [
@@ -260,30 +260,24 @@ async function fetchFromTMDB(endpoint, params = {}) {
     return mockData;
   }
 
-  try {
-    const response = await tmdbClient.get(endpoint, { params });
-    let data = response.data;
-    if (data) {
-      if (Array.isArray(data.results)) {
-        data.results = data.results.map(movie => {
-          if (movie && movie.original_title) {
-            movie.title = movie.original_title;
-          }
-          return movie;
-        });
-      } else if (data.original_title) {
-        data.title = data.original_title;
-      }
+  const response = await tmdbClient.get(endpoint, { params });
+  let data = response.data;
+  if (data) {
+    if (Array.isArray(data.results)) {
+      data.results = data.results.map(movie => {
+        if (movie && movie.original_title) {
+          movie.title = movie.original_title;
+        }
+        return movie;
+      });
+    } else if (data.original_title) {
+      data.title = data.original_title;
     }
-    setCache(cacheKey, data);
-    return data;
-  } catch (err) {
-    console.error(`[TMDB API Error] ${err.message || err}. Falling back to mock data.`);
-    const mockData = mockFetchFromTMDB(endpoint, params);
-    setCache(cacheKey, mockData);
-    return mockData;
   }
+  setCache(cacheKey, data);
+  return data;
 }
+
 
 
 async function getPopularMovies(page = 1) {
