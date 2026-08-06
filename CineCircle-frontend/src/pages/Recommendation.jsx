@@ -681,16 +681,6 @@ function Recommendation() {
                         
                         <span style={{ color: "#444" }}>•</span>
                         
-                        <span>🌐</span>
-                        <strong style={{ color: "#AAA" }}>Country:</strong>
-                        <span style={{ color: "#FFF" }}>
-                          {movie.originCountry && movie.originCountry.length > 0 
-                            ? (countryCodeToName[movie.originCountry[0]] || movie.originCountry[0]) 
-                            : (movie.country || 'N/A')}
-                        </span>
-                        
-                        <span style={{ color: "#444" }}>•</span>
-                        
                         <span>🏷️</span>
                         <strong style={{ color: "#AAA" }}>Genre:</strong>
                         <span style={{ color: "#FFF" }}>
@@ -699,6 +689,7 @@ function Recommendation() {
                             : (movie.genre || 'N/A')}
                         </span>
                       </div>
+
                     </div>
                   </div>
 
