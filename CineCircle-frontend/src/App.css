@@ -998,19 +998,24 @@
 .badge-match { color: #4ade80; font-weight: 700; }
 .badge-age { border: 1px solid var(--text-dim); padding: 0 6px; border-radius: 3px; }
 
-/* Watchlist Drawer */
+/* Watchlist Modal Card */
 .watchlist-drawer {
-  position: fixed;
-  top: 0; right: 0; bottom: 0;
-  width: 100%; max-width: 420px;
-  background: #141724;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  max-height: 80vh;
+  background: #171a26;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
   padding: 28px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
   z-index: 1100;
+  overflow: hidden;
 }
+
 
 .drawer-header {
   display: flex;
@@ -1029,7 +1034,9 @@
   flex-direction: column;
   gap: 14px;
   overflow-y: auto;
+  flex: 1;
 }
+
 
 .watchlist-item {
   display: flex;
