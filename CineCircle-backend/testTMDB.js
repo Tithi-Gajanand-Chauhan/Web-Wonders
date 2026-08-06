@@ -1,19 +1,14 @@
 require("dotenv").config();
 
-const tmdb = require("./src/service/tmdbService");
-
-
-async function test(){
-
- const movies =
- await tmdb.getPopularMovies(1);
-
-
- console.log(
-   movies.results.slice(0,5)
- );
-
-}
-
-
-test();
+fetch(
+  "https://api.themoviedb.org/3/movie/popular",
+  {
+    headers:{
+      Authorization:`Bearer ${process.env.TMDB_TOKEN}`,
+      Accept:"application/json"
+    }
+  }
+)
+.then(res => res.json())
+.then(data => console.log(data))
+.catch(err => console.log(err));

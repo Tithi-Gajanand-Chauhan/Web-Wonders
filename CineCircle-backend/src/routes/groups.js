@@ -165,10 +165,7 @@ if (index !== -1) {
 
 
 router.get("/status/:groupCode", (req, res) => {
-
-  const group = groups.get(
-    req.params.groupCode.toUpperCase()
-  );
+  const group = groups.get(req.params.groupCode.toUpperCase());
 
   if (!group) {
     return res.status(404).json({
@@ -177,123 +174,79 @@ router.get("/status/:groupCode", (req, res) => {
   }
 
   res.json({
-
     totalMembers: group.members.length,
-
-    submittedPreferences:
-      group.preferences.length,
-
-    everyoneReady:
-      group.preferences.length ===
-      group.members.length,
-
-    locked: group.locked  
-
+    submittedPreferences: group.preferences.length,
+    everyoneReady: group.preferences.length === group.members.length,
+    locked: group.locked,
+    generating: !!group.generating,
+    hasRecommendations: !!(group.recommendations && group.recommendations.recommendations && group.recommendations.recommendations.length > 0)
   });
-
 });
 
 
-
-router.post("/recommend",async(req,res)=>{
-
-
+router.post("/recommend", async (req, res) => {
   console.log("RECOMMEND ROUTE HIT");
+  const { groupCode } = req.body;
 
-  const {groupCode}=req.body;
-
-  const group=groups.get(groupCode.toUpperCase());
-
-
-  if(!group){
-    return res.status(404).json({
-      error:"Group not found"
-    });
+  if (!groupCode) {
+    return res.status(400).json({ error: "Missing groupCode" });
   }
-  
+
+  const group = groups.get(groupCode.toUpperCase());
+
+  if (!group) {
+    return res.status(404).json({ error: "Group not found" });
+  }
+
   console.log(
-  "GROUP PREFERENCES:",
-  JSON.stringify(group.preferences, null, 2)
-);
-
-
-
-  try{
-
+    "GROUP PREFERENCES:",
+    JSON.stringify(group.preferences, null, 2)
+  );
 
   // If recommendations already generated
   if (
-  group.recommendations &&
-  group.recommendations.recommendations &&
-  group.recommendations.recommendations.length > 0
-) {
-
+    group.recommendations &&
+    group.recommendations.recommendations &&
+    group.recommendations.recommendations.length > 0
+  ) {
     console.log("Returning saved recommendations");
-
     return res.json(group.recommendations);
-
-}
-
-
-
-  console.log("Generating new recommendations...");
-
-  if(group.generating){
- return res.json({
-   message:"Already generating"
- });
-}
-
-group.generating=true;
-
-  const recommendations =
-    await getGroupRecommendations(
-      group.preferences
-    );
-
-    console.log(
-  "FINAL RECOMMENDATIONS BEFORE SAVE:",
-  recommendations
-);
-
-  if(
-  !recommendations.recommendations ||
-  recommendations.recommendations.length === 0
-){
-  console.log("Empty recommendations received, not saving");
-  return res.json({
-    recommendations
-  });
-}
-
-
-
-  // Save recommendations
-  group.recommendations = recommendations;
-
-
-  // Lock group after AI starts
-  group.locked = true;
-
-
-
-  res.json (recommendations);
-
-
-}
-
-  catch(error){
-
-    console.log(error);
-
-
-    res.status(500).json({
-      error:"Failed to generate recommendation"
-    });
-
   }
 
+  if (group.generating) {
+    console.log("Already generating recommendations for group:", groupCode);
+    return res.json({
+      message: "Already generating",
+      generating: true,
+      recommendations: group.recommendations || null
+    });
+  }
 
+  // Lock group immediately to prevent duplicate triggers from lobby polling
+  group.generating = true;
+  group.locked = true;
+
+  try {
+    console.log("Generating new recommendations...");
+    const recommendations = await getGroupRecommendations(group.preferences);
+
+    console.log(
+      "FINAL RECOMMENDATIONS BEFORE SAVE:",
+      JSON.stringify(recommendations, null, 2)
+    );
+
+    // Save recommendations to group state
+    group.recommendations = recommendations;
+
+    return res.json(recommendations);
+  } catch (error) {
+    console.error("Error generating recommendations:", error);
+    return res.status(500).json({
+      error: "Failed to generate recommendation"
+    });
+  } finally {
+    group.generating = false;
+  }
 });
 
 router.get("/winner/:groupCode", (req, res) => {
@@ -347,7 +300,8 @@ router.post("/vote", (req, res) => {
     groupCode,
     movieId,
     movieTitle,
-    username
+    username,
+    action
   } = req.body;
 
 
@@ -374,9 +328,19 @@ router.post("/vote", (req, res) => {
 
 
 // Avoid duplicate voting
-if (!group.votes[movieId].users.includes(username)) {
+if(action==="unvote"){
 
-  group.votes[movieId].users.push(username);
+ group.votes[movieId].users =
+ group.votes[movieId].users.filter(
+ user=>user!==username
+ );
+
+}
+else{
+
+ if(!group.votes[movieId].users.includes(username)){
+   group.votes[movieId].users.push(username);
+ }
 
 }
 
@@ -388,6 +352,29 @@ res.json({
   votes: group.votes[movieId].users.length
 
 });
+});
+
+router.get("/votes/:groupCode", (req,res)=>{
+
+  const group = groups.get(
+    req.params.groupCode.toUpperCase()
+  );
+
+  if(!group){
+    return res.status(404).json({
+      error:"Group not found"
+    });
+  }
+
+  res.json({
+    votes:Object.fromEntries(
+      Object.entries(group.votes).map(([id,data])=>[
+        id,
+        data.users.length
+      ])
+    )
+  });
+
 });
 
 

@@ -63,6 +63,47 @@ router.get('/chinese', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch Chinese movies' });
   }
 });
+
+// GET /api/movies/hindi
+router.get('/hindi', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const data = await tmdbService.getHindiMovies(page);
+    res.json(data);
+  } catch (err) {
+    console.error('Error fetching Hindi movies:', err.message);
+    res.status(500).json({ error: 'Failed to fetch Hindi movies' });
+  }
+});
+
+
+// GET /api/movies/gujarati
+router.get('/gujarati', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const data = await tmdbService.getGujaratiMovies(page);
+    res.json(data);
+  } catch (err) {
+    console.error('Error fetching Gujarati movies:', err.message);
+    res.status(500).json({ error: 'Failed to fetch Gujarati movies' });
+  }
+});
+
+
+// GET /api/movies/marathi
+router.get('/marathi', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const data = await tmdbService.getMarathiMovies(page);
+    res.json(data);
+  } catch (err) {
+    console.error('Error fetching Marathi movies:', err.message);
+    res.status(500).json({ error: 'Failed to fetch Marathi movies' });
+  }
+});
+
+
+
 // GET /api/movies/genres
 router.get('/genres', async (req, res) => {
   try {
@@ -83,6 +124,28 @@ router.get('/trending', async (req, res) => {
   } catch (err) {
     console.error('Error fetching trending movies:', err.message);
     res.status(500).json({ error: 'Failed to fetch trending movies' });
+  }
+});
+
+// GET /api/movies/telugu
+router.get('/telugu', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+
+    const data = await tmdbService.getMoviesByLanguage(
+      page,
+      "te"
+
+
+    );
+
+    res.json(data);
+
+  } catch (err) {
+    console.error('Error fetching Telugu movies:', err.message);
+    res.status(500).json({
+      error: 'Failed to fetch Telugu movies'
+    });
   }
 });
 
