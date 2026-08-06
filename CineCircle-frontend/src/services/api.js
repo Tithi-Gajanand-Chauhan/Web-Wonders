@@ -4,7 +4,7 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 3000,
+  timeout: 10000,
 });
 
 // Curated high quality movie dataset with real high-res posters, backdrops, YouTube trailers & details
@@ -388,117 +388,98 @@ const CURATED_MOVIES = [
 ];
 
 export const getGenres = async () => {
-  try {
-    const response = await api.get('/movies/genres');
-    if (response.data && response.data.genres) return response.data;
-  } catch (e) {
-    // Fallback if backend offline
-  }
-  return { genres: MOCK_GENRES };
+  const response = await api.get('/movies/genres');
+  return response.data;
 };
 
 export const getPopularMovies = async (page = 1) => {
-  try {
-    const response = await api.get('/movies/popular', { params: { page } });
-    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
-  } catch (e) {
-    // Fallback if backend offline
-  }
-  return { results: CURATED_MOVIES };
+  const response = await api.get('/movies/popular', { params: { page } });
+  return response.data;
 };
 
 export const getTrendingMovies = async (timeWindow = 'day', page = 1) => {
-  try {
-    const response = await api.get('/movies/trending', { params: { window: timeWindow, page } });
-    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
-  } catch (e) {
-    // Fallback if backend offline
-  }
-  return { results: CURATED_MOVIES.slice(0, 10) };
+  const response = await api.get('/movies/trending', { params: { window: timeWindow, page } });
+  return response.data;
 };
 
 export const getRecentMovies = async (page = 1) => {
-  try {
-    const response = await api.get('/movies/recent', { params: { page } });
-    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
-  } catch (e) {
-    // Fallback if backend offline
-  }
-  return { results: CURATED_MOVIES.filter(m => Number(m.release_date?.split('-')[0]) >= 2022) };
+  const response = await api.get('/movies/recent', { params: { page } });
+  return response.data;
 };
 
 export const getSciFiMovies = async (page = 1) => {
-  try {
-    const response = await api.get('/movies/scifi', { params: { page } });
-    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
-  } catch (e) {
-    // Fallback if backend offline
-  }
-  return { results: CURATED_MOVIES.filter(m => m.genre_ids?.includes(878) || m.moods?.includes('Sci-Fi')) };
+  const response = await api.get('/movies/scifi', { params: { page } });
+  return response.data;
 };
 
 export const getAnimationMovies = async (page = 1) => {
-  try {
-    const response = await api.get('/movies/animation', { params: { page } });
-    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
-  } catch (e) {
-    // Fallback if backend offline
-  }
-  return { results: CURATED_MOVIES.filter(m => m.genre_ids?.includes(16) || m.moods?.includes('Cartoons & Animation')) };
+  const response = await api.get('/movies/animation', { params: { page } });
+  return response.data;
 };
 
 export const getKoreanMovies = async (page = 1) => {
-  try {
-    const response = await api.get('/movies/korean', { params: { page } });
-    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
-  } catch (e) {
-    // Fallback if backend offline
-  }
-  return { results: CURATED_MOVIES.filter(m => m.badge?.includes('Korean') || m.id === 496243 || m.id === 372058) };
+  const response = await api.get('/movies/korean', { params: { page } });
+  return response.data;
 };
 
 export const getChineseMovies = async (page = 1) => {
-  try {
-    const response = await api.get('/movies/chinese', { params: { page } });
-    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
-  } catch (e) {
-    // Fallback if backend offline
-  }
-  return { results: CURATED_MOVIES.filter(m => m.badge?.includes('Chinese') || m.id === 57800) };
+  const response = await api.get('/movies/chinese', { params: { page } });
+  return response.data;
+};
+
+export const getIndianMovies = async (page = 1) => {
+  const response = await api.get('/movies/indian', { params: { page } });
+  return response.data;
 };
 
 export const searchMovies = async (query, page = 1) => {
-  try {
-    const response = await api.get('/movies/search', { params: { query, page } });
-    if (response.data && response.data.results) return response.data;
-  } catch (e) {
-    // Fallback if backend offline
-  }
-  const q = query.toLowerCase();
-  const filtered = CURATED_MOVIES.filter(m => 
-    m.title.toLowerCase().includes(q) || 
-    m.overview.toLowerCase().includes(q) ||
-    (m.moods && m.moods.some(mood => mood.toLowerCase().includes(q)))
-  );
-  return { results: filtered };
+  const response = await api.get('/movies/search', { params: { query, page } });
+  return response.data;
 };
 
 export const getMovieDetails = async (id) => {
-  try {
-    const response = await api.get(`/movies/${id}`);
-    if (response.data && response.data.title) return response.data;
-  } catch (e) {
-    // Fallback if backend offline
-  }
-  const found = CURATED_MOVIES.find(m => m.id === Number(id)) || CURATED_MOVIES[0];
-  return {
-    ...found,
-    genres: MOCK_GENRES.filter(g => found.genre_ids?.includes(g.id)),
-    credits: {
-      cast: found.cast || [],
-      crew: [{ id: 99, job: 'Director', name: 'Christopher Nolan' }]
-    }
-  };
+  const response = await api.get(`/movies/${id}`);
+  return response.data;
+};
+
+export const getHollywoodMovies = async (page = 1) => {
+  const response = await api.get('/movies/hollywood', { params: { page } });
+  return response.data;
+};
+
+export const getJapaneseMovies = async (page = 1) => {
+  const response = await api.get('/movies/japanese', { params: { page } });
+  return response.data;
+};
+
+export const getSpanishMovies = async (page = 1) => {
+  const response = await api.get('/movies/spanish', { params: { page } });
+  return response.data;
+};
+
+export const getHorrorMovies = async (page = 1) => {
+  const response = await api.get('/movies/horror', { params: { page } });
+  return response.data;
+};
+
+export const getThrillerMovies = async (page = 1) => {
+  const response = await api.get('/movies/thriller', { params: { page } });
+  return response.data;
+};
+
+export const getRomanceMovies = async (page = 1) => {
+  const response = await api.get('/movies/romance', { params: { page } });
+  return response.data;
+};
+
+export const getActionMovies = async (page = 1) => {
+  const response = await api.get('/movies/action', { params: { page } });
+  return response.data;
+};
+
+export const getAwardMovies = async (page = 1) => {
+  const response = await api.get('/movies/awards', { params: { page } });
+  return response.data;
 };
 
 export default api;

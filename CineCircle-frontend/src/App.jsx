@@ -9,11 +9,32 @@ import TrailerModal from './components/TrailerModal';
 import WatchlistModal from './components/WatchlistModal';
 import WatchPartyModal from './components/WatchPartyModal';
 import './App.css';
+import { getGenres } from './services/api';
+
 
 function App() {
   const [activeTrailer, setActiveTrailer] = useState(null);
   const [isWatchlistOpen, setIsWatchlistOpen] = useState(false);
   const [isWatchPartyOpen, setIsWatchPartyOpen] = useState(false);
+  const [industryFilter, setIndustryFilter] = useState('');
+  const [genreFilter, setGenreFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
+  const [ratingFilter, setRatingFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [genres, setGenres] = useState([]);
+
+  useEffect(() => {
+    async function fetchGenresData() {
+      try {
+        const data = await getGenres();
+        setGenres(data.genres || []);
+      } catch (err) {
+        console.error('Failed to fetch genres in App.jsx:', err);
+      }
+    }
+    fetchGenresData();
+  }, []);
+
 
   // Safe Search state (ON by default)
   const [safeSearch, setSafeSearch] = useState(() => {
@@ -78,6 +99,17 @@ function App() {
         onOpenWatchParty={() => setIsWatchPartyOpen(true)}
         safeSearch={safeSearch}
         onToggleSafeSearch={() => setSafeSearch((prev) => !prev)}
+        genres={genres}
+        genreFilter={genreFilter}
+        setGenreFilter={setGenreFilter}
+        yearFilter={yearFilter}
+        setYearFilter={setYearFilter}
+        ratingFilter={ratingFilter}
+        setRatingFilter={setRatingFilter}
+        industryFilter={industryFilter}
+        setIndustryFilter={setIndustryFilter}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
       />
 
       <Routes>
@@ -90,6 +122,11 @@ function App() {
               isInWatchlist={isInWatchlist}
               onOpenWatchParty={() => setIsWatchPartyOpen(true)}
               safeSearch={safeSearch}
+              genreFilter={genreFilter}
+              yearFilter={yearFilter}
+              ratingFilter={ratingFilter}
+              industryFilter={industryFilter}
+              categoryFilter={categoryFilter}
             />
           }
         />
@@ -100,6 +137,11 @@ function App() {
               onPlayTrailer={(movie) => setActiveTrailer(movie)}
               onToggleWatchlist={toggleWatchlist}
               isInWatchlist={isInWatchlist}
+              genreFilter={genreFilter}
+              yearFilter={yearFilter}
+              ratingFilter={ratingFilter}
+              industryFilter={industryFilter}
+              categoryFilter={categoryFilter}
             />
           }
         />
@@ -110,6 +152,11 @@ function App() {
               onPlayTrailer={(movie) => setActiveTrailer(movie)}
               onToggleWatchlist={toggleWatchlist}
               isInWatchlist={isInWatchlist}
+              genreFilter={genreFilter}
+              yearFilter={yearFilter}
+              ratingFilter={ratingFilter}
+              industryFilter={industryFilter}
+              categoryFilter={categoryFilter}
             />
           }
         />
