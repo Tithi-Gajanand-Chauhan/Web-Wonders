@@ -1,21 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function WatchPartyModal({ isOpen, onClose }) {
+function WatchPartyModal({ isOpen, onClose, user }) {
   const [activeTab, setActiveTab] = useState('create'); // 'create' or 'join'
   
   // Create Group Form State
-  const [createUsername, setCreateUsername] = useState('');
+  const [createUsername, setCreateUsername] = useState(user ? user.username : '');
   const [groupName, setGroupName] = useState('');
   
   // Join Group Form State
-  const [joinUsername, setJoinUsername] = useState('');
+  const [joinUsername, setJoinUsername] = useState(user ? user.username : '');
   const [groupCode, setGroupCode] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isOpen) {
+      setCreateUsername(user ? user.username : '');
+      setJoinUsername(user ? user.username : '');
+    }
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 

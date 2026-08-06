@@ -199,6 +199,7 @@ function App() {
       <WatchPartyModal
         isOpen={isWatchPartyOpen}
         onClose={() => setIsWatchPartyOpen(false)}
+        user={user}
       />
 
       {/* Authentication Login/Signup Modal */}
