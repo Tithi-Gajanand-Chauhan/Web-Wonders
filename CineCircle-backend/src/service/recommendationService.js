@@ -349,71 +349,58 @@ String(candidate.id)
 
 
 
-const enrichedRecommendations =
-rawRecs.map(rec=>{
+const enrichedRecommendations = await Promise.all(
+  rawRecs.map(async (rec) => {
+    let matchedCandidate = candidatePool.find(
+      c => String(c.id) === String(rec.movieId)
+    );
 
+    // Fallback direct TMDB API lookup if unmatched in candidate pool
+    if (!matchedCandidate && rec.movieId) {
+      try {
+        console.log(`Unmatched movie "${rec.title}" (${rec.movieId}). Fetching details directly from TMDB...`);
+        const details = await tmdbService.getMovieDetails(rec.movieId);
+        if (details) {
+          matchedCandidate = {
+            id: details.id,
+            title: details.title || details.original_title,
+            poster: details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : null,
+            rating: details.vote_average,
+            voteCount: details.vote_count,
+            releaseDate: details.release_date,
+            originCountry: details.origin_country || (details.production_countries ? details.production_countries.map(c => c.iso_3166_1) : []),
+            genres: details.genres ? details.genres.map(g => g.id) : []
+          };
+        }
+      } catch (err) {
+        console.error(`Direct TMDB detail lookup failed for movie ID ${rec.movieId}:`, err.message || err);
+      }
+    }
 
-const matchedCandidate =
-candidatePool.find(
-c =>
-String(c.id)===String(rec.movieId)
+    let badge = null;
+    if (matchedCandidate && matchedCandidate.genres && matchedCandidate.genres.length > 0) {
+      const mainGenreName = genreIdToName[matchedCandidate.genres[0]];
+      if (mainGenreName) {
+        badge = `TOP ${mainGenreName.toUpperCase()}`;
+      }
+    }
+
+    return {
+      movieId: matchedCandidate ? matchedCandidate.id : rec.movieId,
+      title: matchedCandidate ? matchedCandidate.title : rec.title,
+      poster: matchedCandidate ? matchedCandidate.poster : null,
+      rating: matchedCandidate ? matchedCandidate.rating : 7.5,
+      voteCount: matchedCandidate ? matchedCandidate.voteCount : 0,
+      explainableAIReason: rec.explainableAIReason || generateMockAIReason(matchedCandidate || rec, groupPreferences),
+      matchedMembers: rec.matchedMembers || (groupPreferences||[]).map(u=>u.user),
+      releaseDate: matchedCandidate ? matchedCandidate.releaseDate : null,
+      originCountry: matchedCandidate ? matchedCandidate.originCountry : null,
+      genres: matchedCandidate ? matchedCandidate.genres : [],
+      badge: badge || "TOP MOVIE"
+    };
+  })
 );
 
-
-
-return {
-
-
-movieId:
-matchedCandidate
-? matchedCandidate.id
-: rec.movieId,
-
-
-title:
-matchedCandidate
-? matchedCandidate.title
-: rec.title,
-
-
-poster:
-matchedCandidate
-? matchedCandidate.poster
-:null,
-
-
-rating:
-matchedCandidate
-? matchedCandidate.rating
-:7.5,
-
-voteCount:
-matchedCandidate
-? matchedCandidate.voteCount
-:0,
-
-
-explainableAIReason:
-rec.explainableAIReason ||
-generateMockAIReason(matchedCandidate || rec, groupPreferences),
-
-
-matchedMembers:
-rec.matchedMembers ||
-(groupPreferences||[])
-.map(u=>u.user),
-
-releaseDate: matchedCandidate ? matchedCandidate.releaseDate : null,
-originCountry: matchedCandidate ? matchedCandidate.originCountry : null,
-genres: matchedCandidate ? matchedCandidate.genres : [],
-badge: (matchedCandidate && matchedCandidate.genres && matchedCandidate.genres.length > 0 && genreIdToName[matchedCandidate.genres[0]]) 
-  ? `TOP ${genreIdToName[matchedCandidate.genres[0]].toUpperCase()}` 
-  : "TOP MOVIE"
-
-};
-
-
-});
 
 
 
@@ -671,20 +658,20 @@ movie.genres?.includes(genreMap[genre])
 
 
 return {
-
-
-movieId:movie.id,
-
-title:movie.title,
-
-poster:movie.poster,
-
-rating:movie.rating,
-
-            explainableAIReason: generateMockAIReason(movie, groupPreferences),
-            matchedMembers: users.map(u => u.user)
-          };
-        })
+          movieId: movie.id,
+          title: movie.title,
+          poster: movie.poster,
+          rating: movie.rating,
+          explainableAIReason: generateMockAIReason(movie, groupPreferences),
+          matchedMembers: users.map(u => u.user),
+          releaseDate: movie.releaseDate,
+          originCountry: movie.originCountry,
+          genres: movie.genres,
+          badge: (movie.genres && movie.genres.length > 0 && genreIdToName[movie.genres[0]]) 
+            ? `TOP ${genreIdToName[movie.genres[0]].toUpperCase()}` 
+            : "TOP MOVIE"
+        };
+      })
   };
 }
 

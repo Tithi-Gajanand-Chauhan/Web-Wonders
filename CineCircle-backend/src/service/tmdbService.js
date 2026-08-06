@@ -146,6 +146,38 @@ const MOCK_MOVIES = [
   }
 ];
 
+function enrichMockMovie(movie) {
+  if (!movie) return movie;
+  
+  const mockMetadata = {
+    101: { release_date: "2014-11-07", origin_country: ["US"] }, // Interstellar
+    102: { release_date: "2010-07-16", origin_country: ["US"] }, // Inception
+    103: { release_date: "2008-07-18", origin_country: ["US"] }, // The Dark Knight
+    104: { release_date: "2001-07-20", origin_country: ["JP"] }, // Spirited Away
+    105: { release_date: "2019-05-30", origin_country: ["KR"] }, // Parasite
+    106: { release_date: "2009-12-25", origin_country: ["IN"] }, // 3 Idiots
+    107: { release_date: "2016-12-23", origin_country: ["IN"] }, // Dangal
+    108: { release_date: "2001-06-15", origin_country: ["IN"] }, // Lagaan
+    109: { release_date: "2015-11-20", origin_country: ["IN"] }, // Chello Divas
+    110: { release_date: "2019-11-08", origin_country: ["IN"] }, // Hellaro
+    115: { release_date: "2016-04-29", origin_country: ["IN"] }, // Sairat
+    116: { release_date: "2016-01-06", origin_country: ["IN"] }, // Natsamrat
+    117: { release_date: "2015-07-10", origin_country: ["IN"] }, // Baahubali
+    118: { release_date: "2022-03-25", origin_country: ["IN"] }  // RRR
+  };
+
+  const meta = mockMetadata[movie.id] || { 
+    release_date: "2020-01-01", 
+    origin_country: [movie.original_language === "en" ? "US" : "IN"] 
+  };
+  
+  return {
+    ...movie,
+    release_date: meta.release_date,
+    origin_country: meta.origin_country
+  };
+}
+
 function mockFetchFromTMDB(endpoint, params) {
   console.log("[MOCK MODE] Serving Mock TMDB endpoint:", endpoint, params);
   
@@ -172,7 +204,7 @@ function mockFetchFromTMDB(endpoint, params) {
       const movieId = parseInt(parts[2]);
       const mockMovie = MOCK_MOVIES.find(m => m.id === movieId) || MOCK_MOVIES[0];
       return {
-        ...mockMovie,
+        ...enrichMockMovie(mockMovie),
         credits: {
           cast: [
             { name: "Actor A", character: "Hero" },
@@ -183,7 +215,7 @@ function mockFetchFromTMDB(endpoint, params) {
     }
   }
 
-  let results = [...MOCK_MOVIES];
+  let results = [...MOCK_MOVIES].map(enrichMockMovie);
   console.log("[MOCK] Initial movies pool size:", results.length);
 
   if (params.with_original_language) {
@@ -204,7 +236,7 @@ function mockFetchFromTMDB(endpoint, params) {
 
   if (results.length === 0) {
     console.log("[MOCK] No results matched. Falling back to first 5 mock movies.");
-    results = MOCK_MOVIES.slice(0, 5);
+    results = [...MOCK_MOVIES].slice(0, 5).map(enrichMockMovie);
   }
 
   return {
@@ -214,6 +246,7 @@ function mockFetchFromTMDB(endpoint, params) {
     total_results: results.length
   };
 }
+
 
 
 // Simple in-memory cache: key -> { data, expiresAt }
