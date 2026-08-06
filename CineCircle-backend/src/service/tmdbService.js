@@ -169,6 +169,18 @@ function mockFetchFromTMDB(endpoint, params) {
   if (endpoint.startsWith("/movie/")) {
     const parts = endpoint.split("/");
     if (parts[2] && parts[2] !== "popular") {
+      if (parts[3] === "videos") {
+        return {
+          results: [
+            {
+              site: "YouTube",
+              type: "Trailer",
+              official: true,
+              key: "dQw4w9WgXcQ"
+            }
+          ]
+        };
+      }
       const movieId = parseInt(parts[2]);
       const mockMovie = MOCK_MOVIES.find(m => m.id === movieId) || MOCK_MOVIES[0];
       return {
@@ -290,6 +302,32 @@ async function getMovieDetails(movieId) {
     append_to_response: 'credits',
   });
 }
+
+async function getMovieVideos(movieId) {
+  try {
+    const data = await fetchFromTMDB(`/movie/${movieId}/videos`, {});
+    if (!data || !Array.isArray(data.results)) {
+      return { trailerKey: null };
+    }
+
+    const youtubeTrailers = data.results.filter(
+      (video) => video.site === 'YouTube' && video.type === 'Trailer'
+    );
+
+    if (youtubeTrailers.length === 0) {
+      return { trailerKey: null };
+    }
+
+    const officialTrailer = youtubeTrailers.find((v) => v.official === true);
+    const selectedTrailer = officialTrailer || youtubeTrailers[0];
+
+    return { trailerKey: selectedTrailer.key || null };
+  } catch (err) {
+    console.error(`Error in getMovieVideos for ID ${movieId}:`, err.message);
+    return { trailerKey: null };
+  }
+}
+
 async function getRecentMovies(page = 1) {
   return fetchFromTMDB('/discover/movie', {
     page,
@@ -314,6 +352,41 @@ async function getChineseMovies(page = 1) {
     sort_by: 'popularity.desc',
   });
 }
+
+async function getHindiMovies(page = 1, genres = []) {
+  const genreIds = Array.isArray(genres) ? genres.filter(Boolean) : [];
+  return fetchFromTMDB('/discover/movie', {
+    page,
+    with_original_language: 'hi',
+    with_genres: genreIds.length ? genreIds.join(",") : undefined,
+    sort_by: 'popularity.desc',
+    'vote_count.gte': 5,
+    include_adult: false,
+  });
+}
+
+async function getGujaratiMovies(page = 1, genres = []) {
+  const genreIds = Array.isArray(genres) ? genres.filter(Boolean) : [];
+  return fetchFromTMDB('/discover/movie', {
+    page,
+    with_original_language: 'gu',
+    with_genres: genreIds.length ? genreIds.join(",") : undefined,
+    sort_by: 'popularity.desc',
+    'vote_count.gte': 1,
+    include_adult: false,
+  });
+}
+
+async function getMarathiMovies(page = 1) {
+  return fetchFromTMDB('/discover/movie', {
+    page,
+    with_original_language: 'mr',
+    sort_by: 'popularity.desc',
+    'vote_count.gte': 1,
+    include_adult: false,
+  });
+}
+
 async function getSciFiMovies(page = 1) {
   return fetchFromTMDB('/discover/movie', {
     page,
@@ -379,9 +452,13 @@ module.exports = {
   getPopularMovies,
   searchMovies,
   getMovieDetails,
+  getMovieVideos,
   getRecentMovies,
   getKoreanMovies,
   getChineseMovies,
+  getHindiMovies,
+  getGujaratiMovies,
+  getMarathiMovies,
   getSciFiMovies,
   getAnimationMovies,
   getGenres,
