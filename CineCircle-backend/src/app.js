@@ -7,6 +7,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const moviesRouter = require('./routes/movies');
 const groupsRouter = require('./routes/groups');
+const authRouter = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -22,6 +23,7 @@ app.use(express.json());
 
 app.use('/api/movies', moviesRouter);
 app.use('/api/groups', groupsRouter);
+app.use('/api/auth', authRouter);
 
 app.get('/', (req, res) => {
   res.json({ message: 'CineCircle API is running' });

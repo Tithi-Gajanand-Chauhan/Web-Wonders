@@ -13,12 +13,52 @@ import JoinGroup from './pages/JoinGroup';
 import GroupLobby from './pages/GroupLobby';
 import Preferences from './pages/Preferences';
 import Recommendation from './pages/Recommendation';
+import AuthModal from './components/AuthModal';
 import './App.css';
 
 function App() {
   const [activeTrailer, setActiveTrailer] = useState(null);
   const [isWatchlistOpen, setIsWatchlistOpen] = useState(false);
   const [isWatchPartyOpen, setIsWatchPartyOpen] = useState(false);
+  
+  // Auth Modal State
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+
+  // Authentication State
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('cinecircle_user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem('cinecircle_token') || null;
+  });
+
+  const handleAuthSuccess = (newToken, newUser) => {
+    try {
+      localStorage.setItem('cinecircle_token', newToken);
+      localStorage.setItem('cinecircle_user', JSON.stringify(newUser));
+      setToken(newToken);
+      setUser(newUser);
+    } catch (e) {
+      console.error('Failed to save auth session:', e);
+    }
+  };
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('cinecircle_token');
+      localStorage.removeItem('cinecircle_user');
+      setToken(null);
+      setUser(null);
+    } catch (e) {
+      console.error('Failed to clear auth session:', e);
+    }
+  };
 
   // Safe Search state (ON by default)
   const [safeSearch, setSafeSearch] = useState(() => {
@@ -83,6 +123,9 @@ function App() {
         onOpenWatchParty={() => setIsWatchPartyOpen(true)}
         safeSearch={safeSearch}
         onToggleSafeSearch={() => setSafeSearch((prev) => !prev)}
+        user={user}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onLogout={handleLogout}
       />
 
       <Routes>
@@ -156,6 +199,13 @@ function App() {
       <WatchPartyModal
         isOpen={isWatchPartyOpen}
         onClose={() => setIsWatchPartyOpen(false)}
+      />
+
+      {/* Authentication Login/Signup Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
       />
 
       <footer className="cinecircle-footer">

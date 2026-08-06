@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { searchMovies } from '../services/api';
 
-function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSearch = true, onToggleSafeSearch }) {
+function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSearch = true, onToggleSafeSearch, user, onOpenAuth, onLogout }) {
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -181,9 +182,74 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
           </svg>
         </button>
 
-        <div className="nav-user-avatar" title="Account Settings">
-          <span>JS</span>
-        </div>
+        {user ? (
+          <div style={{ position: 'relative' }}>
+            <div 
+              className="nav-user-avatar" 
+              title={`Logged in as ${user.username}`} 
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              style={{ cursor: 'pointer' }}
+            >
+              <span>{user.username.slice(0, 2).toUpperCase()}</span>
+            </div>
+
+            {showUserDropdown && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  top: '120%',
+                  right: 0,
+                  background: 'rgba(20, 20, 20, 0.95)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                  zIndex: 600,
+                  width: '150px',
+                  overflow: 'hidden'
+                }}
+              >
+                <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Hi, {user.username}!
+                </div>
+                <button
+                  onClick={() => {
+                    setShowUserDropdown(false);
+                    onLogout();
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#ff4d4d',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '600'
+                  }}
+                >
+                  Sign Out ➔
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button 
+            className="nav-link-pill" 
+            onClick={onOpenAuth}
+            style={{
+              background: 'var(--primary-red)',
+              color: '#fff',
+              border: 'none',
+              padding: '8px 18px',
+              borderRadius: 'var(--radius-pill)',
+              fontWeight: '700',
+              cursor: 'pointer'
+            }}
+          >
+            Sign In
+          </button>
+        )}
       </div>
     </header>
   );
