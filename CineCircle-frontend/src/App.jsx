@@ -78,37 +78,46 @@ function App() {
     }
   }, [safeSearch]);
 
-  // Watchlist persisted in localStorage
-  const [watchlist, setWatchlist] = useState(() => {
-    try {
-      const saved = localStorage.getItem('cinecircle_watchlist');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const getWatchlistKey = (currUser) => {
+    return currUser ? `cinecircle_watchlist_${currUser.id || currUser._id}` : 'cinecircle_watchlist_guest';
+  };
+
+  // Watchlist persisted in localStorage, scoped to the active user
+  const [watchlist, setWatchlist] = useState([]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('cinecircle_watchlist', JSON.stringify(watchlist));
+      const key = getWatchlistKey(user);
+      const saved = localStorage.getItem(key);
+      setWatchlist(saved ? JSON.parse(saved) : []);
     } catch (e) {
-      console.error('Failed to save watchlist:', e);
+      setWatchlist([]);
     }
-  }, [watchlist]);
+  }, [user]);
 
   const toggleWatchlist = (movie) => {
     setWatchlist((prev) => {
       const exists = prev.some((m) => m.id === movie.id);
-      if (exists) {
-        return prev.filter((m) => m.id !== movie.id);
-      } else {
-        return [...prev, movie];
+      const nextList = exists ? prev.filter((m) => m.id !== movie.id) : [...prev, movie];
+      try {
+        localStorage.setItem(getWatchlistKey(user), JSON.stringify(nextList));
+      } catch (e) {
+        console.error('Failed to save watchlist:', e);
       }
+      return nextList;
     });
   };
 
   const removeFromWatchlist = (id) => {
-    setWatchlist((prev) => prev.filter((m) => m.id !== id));
+    setWatchlist((prev) => {
+      const nextList = prev.filter((m) => m.id !== id);
+      try {
+        localStorage.setItem(getWatchlistKey(user), JSON.stringify(nextList));
+      } catch (e) {
+        console.error('Failed to save watchlist:', e);
+      }
+      return nextList;
+    });
   };
 
   const isInWatchlist = (id) => {
