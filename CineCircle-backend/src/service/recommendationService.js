@@ -18,6 +18,28 @@ const genreMap = {
   "Sci-Fi": 878,
 };
 
+const genreIdToName = {
+  28: "Action",
+  12: "Adventure",
+  16: "Animation",
+  35: "Comedy",
+  80: "Crime",
+  99: "Documentary",
+  18: "Drama",
+  10751: "Family",
+  14: "Fantasy",
+  36: "History",
+  27: "Horror",
+  10402: "Music",
+  9648: "Mystery",
+  10749: "Romance",
+  878: "Sci-Fi",
+  10770: "TV Movie",
+  53: "Thriller",
+  10752: "War",
+  37: "Western"
+};
+
 const languageMap={
  English:"en",
  "English Movies":"en",
@@ -147,6 +169,8 @@ async function getCandidateMovies(groupPreferences) {
       ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
       : null,
     voteCount: movie.vote_count,
+    releaseDate: movie.release_date,
+    originCountry: movie.origin_country,
   }));
 }
 
@@ -377,9 +401,14 @@ generateMockAIReason(matchedCandidate || rec, groupPreferences),
 matchedMembers:
 rec.matchedMembers ||
 (groupPreferences||[])
-.map(u=>u.user)
+.map(u=>u.user),
 
-
+releaseDate: matchedCandidate ? matchedCandidate.releaseDate : null,
+originCountry: matchedCandidate ? matchedCandidate.originCountry : null,
+genres: matchedCandidate ? matchedCandidate.genres : [],
+badge: (matchedCandidate && matchedCandidate.genres && matchedCandidate.genres.length > 0 && genreIdToName[matchedCandidate.genres[0]]) 
+  ? `TOP ${genreIdToName[matchedCandidate.genres[0]].toUpperCase()}` 
+  : "TOP MOVIE"
 
 };
 
