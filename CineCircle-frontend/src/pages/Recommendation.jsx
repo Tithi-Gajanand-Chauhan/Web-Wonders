@@ -1,6 +1,46 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+const genreIdToName = {
+  28: "Action",
+  12: "Adventure",
+  16: "Animation",
+  35: "Comedy",
+  80: "Crime",
+  99: "Documentary",
+  18: "Drama",
+  10751: "Family",
+  14: "Fantasy",
+  36: "History",
+  27: "Horror",
+  10402: "Music",
+  9648: "Mystery",
+  10749: "Romance",
+  878: "Sci-Fi",
+  10770: "TV Movie",
+  53: "Thriller",
+  10752: "War",
+  37: "Western"
+};
+
+const countryCodeToName = {
+  "US": "United States",
+  "IN": "India",
+  "GB": "United Kingdom",
+  "CA": "Canada",
+  "FR": "France",
+  "DE": "Germany",
+  "IT": "Italy",
+  "ES": "Spain",
+  "JP": "Japan",
+  "KR": "South Korea",
+  "CN": "China",
+  "RU": "Russia",
+  "BR": "Brazil",
+  "MX": "Mexico",
+  "AU": "Australia"
+};
+
 function Recommendation() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -531,21 +571,44 @@ function Recommendation() {
                   </span>
                 )}
 
-                <img
-                  src={
-                    movie.poster ||
-                    "https://via.placeholder.com/180x260?text=No+Poster"
-                  }
-                  alt={movie.title}
-                  style={{
-                    width: "130px",
-                    height: "190px",
-                    objectFit: "cover",
-                    borderRadius: "10px",
-                    flexShrink: 0,
-                    backgroundColor: "#111111",
-                  }}
-                />
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <img
+                    src={
+                      movie.poster ||
+                      "https://via.placeholder.com/180x260?text=No+Poster"
+                    }
+                    alt={movie.title}
+                    style={{
+                      width: "130px",
+                      height: "190px",
+                      objectFit: "cover",
+                      borderRadius: "10px",
+                      backgroundColor: "#111111",
+                      display: "block"
+                    }}
+                  />
+                  {(movie.badge || (movie.genres && movie.genres.length > 0 && genreIdToName[movie.genres[0]])) && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "8px",
+                        right: "8px",
+                        backgroundColor: "#FFFFFF",
+                        color: "#141414",
+                        fontSize: "0.62rem",
+                        fontWeight: "800",
+                        padding: "3px 8px",
+                        borderRadius: "4px",
+                        whiteSpace: "nowrap",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                      }}
+                    >
+                      {movie.badge || `TOP ${genreIdToName[movie.genres[0]].toUpperCase()}`}
+                    </span>
+                  )}
+                </div>
 
                 <div
                   style={{
@@ -600,18 +663,34 @@ function Recommendation() {
                       {movie.explainableAIReason || "Matched based on group preferences."}
                     </p>
 
-                    {movie.matchedMembers && movie.matchedMembers.length > 0 && (
-                      <p
-                        style={{
-                          fontSize: "12px",
-                          color: "#888",
-                          margin: "0 0 16px 0",
-                        }}
-                      >
-                        🎯 <strong style={{ color: "#AAA" }}>Matches:</strong>{" "}
-                        {movie.matchedMembers.join(", ")}
-                      </p>
-                    )}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px", fontSize: "12.5px" }}>
+                      {movie.matchedMembers && movie.matchedMembers.length > 0 && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span>🎯</span>
+                          <strong style={{ color: "#AAA" }}>Matches:</strong>
+                          <span style={{ color: "#E50914", fontWeight: "700" }}>{movie.matchedMembers.join(", ")}</span>
+                        </div>
+                      )}
+                      
+                      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", color: "#888" }}>
+                        <span>📅</span>
+                        <strong style={{ color: "#AAA" }}>Year:</strong>
+                        <span style={{ color: "#FFF" }}>
+                          {movie.releaseDate ? movie.releaseDate.split('-')[0] : (movie.year || '2026')}
+                        </span>
+                        
+                        <span style={{ color: "#444" }}>•</span>
+                        
+                        <span>🏷️</span>
+                        <strong style={{ color: "#AAA" }}>Genre:</strong>
+                        <span style={{ color: "#FFF" }}>
+                          {movie.genres && movie.genres.length > 0 
+                            ? movie.genres.map(id => genreIdToName[id]).filter(Boolean).slice(0, 3).join(', ') 
+                            : (movie.genre || 'N/A')}
+                        </span>
+                      </div>
+
+                    </div>
                   </div>
 
                   {/* Actions Bar */}
