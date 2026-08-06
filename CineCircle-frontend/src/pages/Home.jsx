@@ -1,26 +1,30 @@
 import { useState, useEffect, useMemo } from 'react';
-import MovieRow from '../components/MovieRow';
+import HeroSpotlight from '../components/HeroSpotlight';
 import FilterBar from '../components/FilterBar';
 import TrendingSection from '../components/TrendingSection';
+import MovieRow from '../components/MovieRow';
 
 import {
   getPopularMovies,
   getRecentMovies,
+  getSciFiMovies,
+  getAnimationMovies,
   getKoreanMovies,
   getChineseMovies,
   getGenres,
 } from '../services/api';
 
-function Home() {
+function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchParty, safeSearch = true }) {
   const [rows, setRows] = useState({
     popular: [],
     recent: [],
+    scifi: [],
+    animation: [],
     korean: [],
     chinese: [],
   });
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const [genreFilter, setGenreFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
@@ -30,9 +34,11 @@ function Home() {
     async function fetchAll() {
       try {
         setLoading(true);
-        const [popular, recent, korean, chinese, genreData] = await Promise.all([
+        const [popular, recent, scifi, animation, korean, chinese, genreData] = await Promise.all([
           getPopularMovies(),
           getRecentMovies(),
+          getSciFiMovies(),
+          getAnimationMovies(),
           getKoreanMovies(),
           getChineseMovies(),
           getGenres(),
@@ -41,14 +47,14 @@ function Home() {
         setRows({
           popular: popular.results || [],
           recent: recent.results || [],
+          scifi: scifi.results || [],
+          animation: animation.results || [],
           korean: korean.results || [],
           chinese: chinese.results || [],
         });
         setGenres(genreData.genres || []);
-        setError(null);
       } catch (err) {
         console.error('Failed to fetch movies:', err);
-        setError('Failed to load movies. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -59,9 +65,18 @@ function Home() {
 
   const applyFilters = (movies) => {
     return movies.filter((movie) => {
+      // Safe Search filter
+      if (safeSearch) {
+        if (movie.adult === true) return false;
+        if (movie.age_rating === '18+' || movie.age_rating === 'NC-17') return false;
+      }
+      // Genre filter
       if (genreFilter && !movie.genre_ids?.includes(Number(genreFilter))) return false;
+      // Year filter
       if (yearFilter && movie.release_date?.split('-')[0] !== yearFilter) return false;
+      // Rating filter
       if (ratingFilter && movie.vote_average < Number(ratingFilter)) return false;
+
       return true;
     });
   };
@@ -70,25 +85,28 @@ function Home() {
     () => ({
       popular: applyFilters(rows.popular),
       recent: applyFilters(rows.recent),
+      scifi: applyFilters(rows.scifi),
+      animation: applyFilters(rows.animation),
       korean: applyFilters(rows.korean),
       chinese: applyFilters(rows.chinese),
     }),
-    [rows, genreFilter, yearFilter, ratingFilter]
+    [rows, safeSearch, genreFilter, yearFilter, ratingFilter]
   );
 
-  if (loading) {
-    return <div className="status-message">Loading movies...</div>;
-  }
-
-  if (error) {
-    return <div className="status-message error">{error}</div>;
-  }
-
   return (
-    <div className="home-page">
-      <h1 className="app-title">CineCircle</h1>
+    <main className="home-page-layout">
+      {/* Hero Spotlight Featured Banner */}
+      {!loading && filteredRows.popular.length > 0 && (
+        <HeroSpotlight
+          movies={filteredRows.popular}
+          onPlayTrailer={onPlayTrailer}
+          onToggleWatchlist={onToggleWatchlist}
+          isInWatchlist={isInWatchlist}
+        />
+      )}
 
-      <div className="home-filters">
+      <div className="home-content-container">
+        {/* Consolidated Dropdown Filters */}
         <FilterBar
           genres={genres}
           genreFilter={genreFilter}
@@ -98,14 +116,70 @@ function Home() {
           ratingFilter={ratingFilter}
           setRatingFilter={setRatingFilter}
         />
-      </div>
 
-      <TrendingSection />
-      <MovieRow title="Popular Movies" movies={filteredRows.popular} />
-      <MovieRow title="Recently Released" movies={filteredRows.recent} />
-      <MovieRow title="Korean Movies" movies={filteredRows.korean} />
-      <MovieRow title="Chinese Movies" movies={filteredRows.chinese} />
-    </div>
+        {/* Dynamic Trending Tabs: Today Trending, Weekly Trending, Monthly Trending, New Releases */}
+        <TrendingSection
+          onPlayTrailer={onPlayTrailer}
+          onToggleWatchlist={onToggleWatchlist}
+          isInWatchlist={isInWatchlist}
+        />
+
+        {/* Categorized Movie Rows */}
+        {loading ? (
+          <div className="status-message">Loading titles...</div>
+        ) : (
+          <>
+            <MovieRow
+              title="New Releases & Recent Hits"
+              movies={filteredRows.recent}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+            />
+
+            <MovieRow
+              title="Top Rated Masterpieces"
+              movies={filteredRows.popular}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+            />
+
+            <MovieRow
+              title="Sci-Fi Universe"
+              movies={filteredRows.scifi}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+            />
+
+            <MovieRow
+              title="Cartoons & Animated Hits"
+              movies={filteredRows.animation}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+            />
+
+            <MovieRow
+              title="Korean Masterpieces & Cinema"
+              movies={filteredRows.korean}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+            />
+
+            <MovieRow
+              title="Chinese Cinema & Blockbusters"
+              movies={filteredRows.chinese}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+            />
+          </>
+        )}
+      </div>
+    </main>
   );
 }
 

@@ -1,5 +1,5 @@
 function FilterBar({
-  genres,
+  genres = [],
   genreFilter,
   setGenreFilter,
   yearFilter,
@@ -16,60 +16,51 @@ function FilterBar({
   };
 
   return (
-    <div className="filters-bar">
-      <div className="filter-group">
-        <label className="filter-label">Genre</label>
+    <div className="filter-bar-container">
+      <div className="filter-select-wrapper">
         <select
-          className={`filter-select ${genreFilter ? 'filter-active' : ''}`}
+          className={`filter-select-pill ${genreFilter ? 'active' : ''}`}
           value={genreFilter}
           onChange={(e) => setGenreFilter(e.target.value)}
         >
-          <option value="">All</option>
+          <option value="">Genres</option>
           {genres.map((g) => (
             <option key={g.id} value={g.id}>
               {g.name}
             </option>
           ))}
         </select>
-      </div>
 
-      <div className="filter-group">
-        <label className="filter-label">Year</label>
         <select
-          className={`filter-select ${yearFilter ? 'filter-active' : ''}`}
+          className={`filter-select-pill ${yearFilter ? 'active' : ''}`}
           value={yearFilter}
           onChange={(e) => setYearFilter(e.target.value)}
         >
-          <option value="">All</option>
-          {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+          <option value="">Release Year</option>
+          {Array.from({ length: 20 }, (_, i) => new Date().getFullYear() - i).map((y) => (
             <option key={y} value={y}>
               {y}
             </option>
           ))}
         </select>
-      </div>
 
-      <div className="filter-group">
-        <label className="filter-label">Rating</label>
         <select
-          className={`filter-select ${ratingFilter ? 'filter-active' : ''}`}
+          className={`filter-select-pill ${ratingFilter ? 'active' : ''}`}
           value={ratingFilter}
           onChange={(e) => setRatingFilter(e.target.value)}
         >
-          <option value="">Any</option>
-          <option value="9">9+</option>
-          <option value="8">8+</option>
-          <option value="7">7+</option>
-          <option value="6">6+</option>
-          <option value="5">5+</option>
+          <option value="">User Rating</option>
+          <option value="9">Rating 9.0+</option>
+          <option value="8">Rating 8.0+</option>
+          <option value="7">Rating 7.0+</option>
         </select>
-      </div>
 
-      {hasActiveFilters && (
-        <button className="filter-clear-btn" onClick={clearFilters}>
-          Clear Filters ✕
-        </button>
-      )}
+        {hasActiveFilters && (
+          <button className="filter-reset-btn" onClick={clearFilters}>
+            Reset Filters ✕
+          </button>
+        )}
+      </div>
     </div>
   );
 }

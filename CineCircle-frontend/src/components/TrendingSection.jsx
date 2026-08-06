@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import MovieCard from './MovieCard';
-import { getTrendingMovies } from '../services/api';
+import MovieRow from './MovieRow';
+import { getTrendingMovies, getRecentMovies } from '../services/api';
 
-function TrendingSection() {
-  const [timeWindow, setTimeWindow] = useState('day');
+function TrendingSection({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
+  const [activeTab, setActiveTab] = useState('day'); // 'day', 'week', 'month', 'recent'
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -11,8 +11,18 @@ function TrendingSection() {
     async function fetchTrending() {
       try {
         setLoading(true);
-        const data = await getTrendingMovies(timeWindow);
-        setMovies(data.results || []);
+        if (activeTab === 'recent') {
+          const data = await getRecentMovies();
+          setMovies(data.results || []);
+        } else if (activeTab === 'month') {
+          // For monthly trending, get week trending sorted by high rating/popularity
+          const data = await getTrendingMovies('week');
+          const sorted = [...(data.results || [])].sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+          setMovies(sorted);
+        } else {
+          const data = await getTrendingMovies(activeTab);
+          setMovies(data.results || []);
+        }
       } catch (err) {
         console.error('Failed to fetch trending movies:', err);
       } finally {
@@ -20,38 +30,60 @@ function TrendingSection() {
       }
     }
     fetchTrending();
-  }, [timeWindow]);
+  }, [activeTab]);
+
+  const getSectionTitle = () => {
+    switch (activeTab) {
+      case 'day': return 'Today Trending';
+      case 'week': return 'Weekly Trending';
+      case 'month': return 'Monthly Trending';
+      case 'recent': return 'New Releases';
+      default: return 'Top 10 Today';
+    }
+  };
 
   return (
-    <section className="movie-row trending-section">
-      <div className="trending-header">
-        <h2 className="row-title">Trending</h2>
-        <div className="trending-toggle">
-          <button
-            className={timeWindow === 'day' ? 'toggle-btn active' : 'toggle-btn'}
-            onClick={() => setTimeWindow('day')}
-          >
-            Today
-          </button>
-          <button
-            className={timeWindow === 'week' ? 'toggle-btn active' : 'toggle-btn'}
-            onClick={() => setTimeWindow('week')}
-          >
-            This Week
-          </button>
-        </div>
+    <div className="trending-section-container">
+      <div className="trending-toggle-bar">
+        <button
+          className={`toggle-tab ${activeTab === 'day' ? 'active' : ''}`}
+          onClick={() => setActiveTab('day')}
+        >
+          Today Trending
+        </button>
+        <button
+          className={`toggle-tab ${activeTab === 'week' ? 'active' : ''}`}
+          onClick={() => setActiveTab('week')}
+        >
+          Weekly Trending
+        </button>
+        <button
+          className={`toggle-tab ${activeTab === 'month' ? 'active' : ''}`}
+          onClick={() => setActiveTab('month')}
+        >
+          Monthly Trending
+        </button>
+        <button
+          className={`toggle-tab ${activeTab === 'recent' ? 'active' : ''}`}
+          onClick={() => setActiveTab('recent')}
+        >
+          New Releases
+        </button>
       </div>
 
       {loading ? (
-        <div className="status-message">Loading trending movies...</div>
+        <div className="status-message">Loading titles...</div>
       ) : (
-        <div className="row-scroll">
-          {movies.map((movie) => (
-            <MovieCard key={movie.id} movie={movie} />
-          ))}
-        </div>
+        <MovieRow
+          title={`Top 10 ${getSectionTitle()}`}
+          movies={movies.slice(0, 10)}
+          isTop10={true}
+          onPlayTrailer={onPlayTrailer}
+          onToggleWatchlist={onToggleWatchlist}
+          isInWatchlist={isInWatchlist}
+        />
       )}
-    </section>
+    </div>
   );
 }
 

@@ -63,6 +63,30 @@ router.get('/chinese', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch Chinese movies' });
   }
 });
+
+// GET /api/movies/scifi
+router.get('/scifi', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const data = await tmdbService.getSciFiMovies(page);
+    res.json(data);
+  } catch (err) {
+    console.error('Error fetching Sci-Fi movies:', err.message);
+    res.status(500).json({ error: 'Failed to fetch Sci-Fi movies' });
+  }
+});
+
+// GET /api/movies/animation
+router.get('/animation', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const data = await tmdbService.getAnimationMovies(page);
+    res.json(data);
+  } catch (err) {
+    console.error('Error fetching animation movies:', err.message);
+    res.status(500).json({ error: 'Failed to fetch animation movies' });
+  }
+});
 // GET /api/movies/genres
 router.get('/genres', async (req, res) => {
   try {

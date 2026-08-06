@@ -1,16 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
+import FilterBar from '../components/FilterBar';
 import { searchMovies, getGenres } from '../services/api';
 
-function SearchResults() {
+function SearchResults({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('query') || '';
 
   const [movies, setMovies] = useState([]);
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const [genreFilter, setGenreFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
@@ -36,10 +36,8 @@ function SearchResults() {
         setLoading(true);
         const data = await searchMovies(query);
         setMovies(data.results || []);
-        setError(null);
       } catch (err) {
         console.error('Search failed:', err);
-        setError('Failed to search movies. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -50,71 +48,49 @@ function SearchResults() {
 
   const filteredMovies = useMemo(() => {
     return movies.filter((movie) => {
-      if (genreFilter && !movie.genre_ids?.includes(Number(genreFilter))) {
-        return false;
-      }
-      if (yearFilter) {
-        const year = movie.release_date?.split('-')[0];
-        if (year !== yearFilter) return false;
-      }
-      if (ratingFilter && movie.vote_average < Number(ratingFilter)) {
-        return false;
-      }
+      if (genreFilter && !movie.genre_ids?.includes(Number(genreFilter))) return false;
+      if (yearFilter && movie.release_date?.split('-')[0] !== yearFilter) return false;
+      if (ratingFilter && movie.vote_average < Number(ratingFilter)) return false;
       return true;
     });
   }, [movies, genreFilter, yearFilter, ratingFilter]);
 
   if (!query) {
-    return <div className="status-message">Type something to search.</div>;
+    return <div className="status-message">Type something in the search bar to find movies.</div>;
   }
 
   if (loading) {
-    return <div className="status-message">Searching...</div>;
-  }
-
-  if (error) {
-    return <div className="status-message error">{error}</div>;
+    return <div className="status-message">Searching for "{query}"...</div>;
   }
 
   return (
-    <div className="search-page">
-      <h1 className="search-heading">Results for "{query}"</h1>
+    <div className="home-content-container" style={{ paddingTop: '30px' }}>
+      <h1 className="row-title" style={{ fontSize: '1.8rem' }}>
+        Results for "{query}" ({filteredMovies.length})
+      </h1>
 
-      <div className="filters-bar">
-        <select value={genreFilter} onChange={(e) => setGenreFilter(e.target.value)}>
-          <option value="">All Genres</option>
-          {genres.map((g) => (
-            <option key={g.id} value={g.id}>
-              {g.name}
-            </option>
-          ))}
-        </select>
-
-        <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
-          <option value="">All Years</option>
-          {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
-
-        <select value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)}>
-          <option value="">Any Rating</option>
-          <option value="9">9+</option>
-          <option value="8">8+</option>
-          <option value="7">7+</option>
-          <option value="6">6+</option>
-          <option value="5">5+</option>
-        </select>
-      </div>
+      <FilterBar
+        genres={genres}
+        genreFilter={genreFilter}
+        setGenreFilter={setGenreFilter}
+        yearFilter={yearFilter}
+        setYearFilter={setYearFilter}
+        ratingFilter={ratingFilter}
+        setRatingFilter={setRatingFilter}
+      />
 
       {filteredMovies.length === 0 ? (
-        <div className="status-message">No movies match your filters.</div>
+        <div className="status-message">No movies found for "{query}".</div>
       ) : (
-        <div className="search-grid">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
           {filteredMovies.map((movie) => (
-            <MovieCard key={movie.id} movie={movie} />
+            <MovieCard
+              key={movie.id}
+              movie={movie}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isSaved={isInWatchlist ? isInWatchlist(movie.id) : false}
+            />
           ))}
         </div>
       )}

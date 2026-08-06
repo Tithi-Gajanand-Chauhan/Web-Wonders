@@ -83,9 +83,26 @@ async function getChineseMovies(page = 1) {
     sort_by: 'popularity.desc',
   });
 }
+async function getSciFiMovies(page = 1) {
+  return fetchFromTMDB('/discover/movie', {
+    page,
+    with_genres: '878',
+    sort_by: 'popularity.desc',
+  });
+}
+
+async function getAnimationMovies(page = 1) {
+  return fetchFromTMDB('/discover/movie', {
+    page,
+    with_genres: '16',
+    sort_by: 'popularity.desc',
+  });
+}
+
 async function getGenres() {
   return fetchFromTMDB('/genre/movie/list', {});
 }
+
 async function getTrendingMovies(timeWindow = 'day', page = 1) {
   return fetchFromTMDB(`/trending/movie/${timeWindow}`, { page });
 }
@@ -97,6 +114,8 @@ module.exports = {
   getRecentMovies,
   getKoreanMovies,
   getChineseMovies,
+  getSciFiMovies,
+  getAnimationMovies,
   getGenres,
   getTrendingMovies,
 };
