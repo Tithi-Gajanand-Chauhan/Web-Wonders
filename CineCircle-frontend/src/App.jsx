@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import SearchResults from './pages/SearchResults';
@@ -18,6 +18,7 @@ import IntroPage from './pages/IntroPage';
 import './App.css';
 
 function App() {
+  const navigate = useNavigate();
   const [activeTrailer, setActiveTrailer] = useState(null);
   const [isWatchlistOpen, setIsWatchlistOpen] = useState(false);
   const [isWatchPartyOpen, setIsWatchPartyOpen] = useState(false);
@@ -56,6 +57,7 @@ function App() {
       localStorage.removeItem('cinecircle_user');
       setToken(null);
       setUser(null);
+      navigate('/');
     } catch (e) {
       console.error('Failed to clear auth session:', e);
     }
@@ -164,6 +166,7 @@ function App() {
               onPlayTrailer={(movie) => setActiveTrailer(movie)}
               onToggleWatchlist={toggleWatchlist}
               isInWatchlist={isInWatchlist}
+              safeSearch={safeSearch}
             />
           }
         />
@@ -174,6 +177,7 @@ function App() {
               onPlayTrailer={(movie) => setActiveTrailer(movie)}
               onToggleWatchlist={toggleWatchlist}
               isInWatchlist={isInWatchlist}
+              safeSearch={safeSearch}
             />
           }
         />

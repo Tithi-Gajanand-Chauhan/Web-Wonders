@@ -4,7 +4,7 @@ import MovieCard from '../components/MovieCard';
 import FilterBar from '../components/FilterBar';
 import { searchMovies, getGenres } from '../services/api';
 
-function SearchResults({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
+function SearchResults({ onPlayTrailer, onToggleWatchlist, isInWatchlist, safeSearch = true }) {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('query') || '';
 
@@ -48,12 +48,17 @@ function SearchResults({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
 
   const filteredMovies = useMemo(() => {
     return movies.filter((movie) => {
+      // Safe Search filter
+      if (safeSearch) {
+        if (movie.adult === true) return false;
+        if (movie.age_rating === '18+' || movie.age_rating === 'NC-17') return false;
+      }
       if (genreFilter && !movie.genre_ids?.includes(Number(genreFilter))) return false;
       if (yearFilter && movie.release_date?.split('-')[0] !== yearFilter) return false;
       if (ratingFilter && movie.vote_average < Number(ratingFilter)) return false;
       return true;
     });
-  }, [movies, genreFilter, yearFilter, ratingFilter]);
+  }, [movies, safeSearch, genreFilter, yearFilter, ratingFilter]);
 
   if (!query) {
     return <div className="status-message">Type something in the search bar to find movies.</div>;

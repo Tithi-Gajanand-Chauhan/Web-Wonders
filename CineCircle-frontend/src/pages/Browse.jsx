@@ -3,7 +3,7 @@ import FilterBar from '../components/FilterBar';
 import MovieCard from '../components/MovieCard';
 import { getPopularMovies, getGenres } from '../services/api';
 
-function Browse({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
+function Browse({ onPlayTrailer, onToggleWatchlist, isInWatchlist, safeSearch = true }) {
   const [movies, setMovies] = useState([]);
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,12 +33,17 @@ function Browse({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
 
   const filteredMovies = useMemo(() => {
     return movies.filter((movie) => {
+      // Safe Search filter
+      if (safeSearch) {
+        if (movie.adult === true) return false;
+        if (movie.age_rating === '18+' || movie.age_rating === 'NC-17') return false;
+      }
       if (genreFilter && !movie.genre_ids?.includes(Number(genreFilter))) return false;
       if (yearFilter && movie.release_date?.split('-')[0] !== yearFilter) return false;
       if (ratingFilter && movie.vote_average < Number(ratingFilter)) return false;
       return true;
     });
-  }, [movies, genreFilter, yearFilter, ratingFilter]);
+  }, [movies, safeSearch, genreFilter, yearFilter, ratingFilter]);
 
   if (loading) return <div className="status-message">Loading movie library...</div>;
 

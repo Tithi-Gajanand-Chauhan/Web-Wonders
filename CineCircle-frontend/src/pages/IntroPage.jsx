@@ -12,13 +12,6 @@ export default function IntroPage({ onOpenAuth, user }) {
   const [entered, setEntered] = useState(false);
   const containerRef = useRef(null);
 
-  // Auto-skip to /home if user is already logged in
-  useEffect(() => {
-    if (user) {
-      navigate('/home');
-    }
-  }, [user, navigate]);
-
   // Fetch a diverse set of posters
   useEffect(() => {
     let cancelled = false;
@@ -80,13 +73,22 @@ export default function IntroPage({ onOpenAuth, user }) {
       id="intro-page"
     >
       {/* Floating Action Header */}
-      {!user && (
-        <div className="intro-top-bar">
+      <div className="intro-top-bar">
+        {user ? (
+          <div className="intro-profile-info" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem', fontWeight: '500' }}>
+              Welcome back, <strong style={{ color: '#fff' }}>{user.username}</strong>
+            </span>
+            <button className="intro-signin-btn" onClick={() => navigate('/home')}>
+              Go to Home
+            </button>
+          </div>
+        ) : (
           <button className="intro-signin-btn" onClick={onOpenAuth}>
             Sign In
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 3D Film Strip Ring Background */}
       {!loading && posters.length > 0 && (

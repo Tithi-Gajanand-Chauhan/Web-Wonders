@@ -194,42 +194,51 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
             </div>
 
             {showUserDropdown && (
-              <div 
-                style={{
-                  position: 'absolute',
-                  top: '120%',
-                  right: 0,
-                  background: 'rgba(20, 20, 20, 0.95)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-                  zIndex: 600,
-                  width: '150px',
-                  overflow: 'hidden'
-                }}
-              >
-                <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Hi, {user.username}!
+              <div className="navbar-profile-dropdown">
+                {/* Profile Header */}
+                <div className="profile-dropdown-header">
+                  <div className="profile-dropdown-avatar">
+                    {user.username.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="profile-dropdown-info">
+                    <span className="profile-dropdown-name">{user.username}</span>
+                    <span className="profile-dropdown-email">{user.email || 'No email saved'}</span>
+                  </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setShowUserDropdown(false);
-                    onLogout();
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    background: 'none',
-                    border: 'none',
-                    color: '#ff4d4d',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    fontWeight: '600'
-                  }}
-                >
-                  Sign Out ➔
-                </button>
+
+                {/* Profile Stats */}
+                <div className="profile-dropdown-stats">
+                  <div className="profile-stat-box">
+                    <span className="profile-stat-value">{watchlistCount}</span>
+                    <span className="profile-stat-desc">Saved</span>
+                  </div>
+                  <div className="profile-stat-box">
+                    <span className="profile-stat-value">Member</span>
+                    <span className="profile-stat-desc">Circle</span>
+                  </div>
+                </div>
+
+                {/* Profile Actions */}
+                <div className="profile-dropdown-actions">
+                  <button
+                    className="profile-action-btn"
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      navigate('/preferences');
+                    }}
+                  >
+                    ⚙️ My Preferences
+                  </button>
+                  <button
+                    className="profile-action-btn logout-btn"
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      onLogout();
+                    }}
+                  >
+                    🚪 Sign Out
+                  </button>
+                </div>
               </div>
             )}
           </div>
