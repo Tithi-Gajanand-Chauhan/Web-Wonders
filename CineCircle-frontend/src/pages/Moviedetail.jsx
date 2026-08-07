@@ -301,133 +301,6 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist, user }) 
               alt={movie.title}
               style={{ width: '100%', borderRadius: '12px', boxShadow: '0 12px 30px rgba(0,0,0,0.8)' }}
             />
-
-            {/* OTT Watch Providers Section */}
-            {(() => {
-              const watchProviders = movie["watch/providers"]?.results?.IN || movie["watch/providers"]?.results?.US;
-              const flatrate = watchProviders?.flatrate || [];
-              const rent = watchProviders?.rent || [];
-              
-              const getProviderLink = (provider) => {
-                const name = provider.provider_name || "";
-                const normName = name.toLowerCase().trim();
-                if (normName.includes("netflix")) return "https://www.netflix.com";
-                if (normName.includes("prime video") || normName.includes("amazon video")) return "https://www.primevideo.com";
-                if (normName.includes("hotstar")) return "https://www.hotstar.com";
-                if (normName.includes("jiocinema")) return "https://www.jiocinema.com";
-                if (normName.includes("zee5")) return "https://www.zee5.com";
-                if (normName.includes("sonyliv")) return "https://www.sonyliv.com";
-                if (normName.includes("apple tv")) return "https://tv.apple.com";
-                
-                return `https://www.google.com/search?q=watch+${encodeURIComponent(movie.title)}+on+${encodeURIComponent(name)}`;
-              };
-
-              return (flatrate.length > 0 || rent.length > 0) ? (
-                <div style={{ backgroundColor: '#161920', padding: '14px 18px', borderRadius: '12px', border: '1px solid #2b303c' }}>
-                  <h4 style={{ fontSize: '0.75rem', fontWeight: '800', color: '#FFF', margin: '0 0 10px 0', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                    📺 Where to Watch
-                  </h4>
-                  
-                  {flatrate.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: rent.length > 0 ? '12px' : '0' }}>
-                      <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '800', textTransform: 'uppercase' }}>Stream</span>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        {flatrate.map((provider) => (
-                          <a
-                            key={provider.provider_id}
-                            href={getProviderLink(provider)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={`Watch on ${provider.provider_name}`}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              backgroundColor: '#1f232d',
-                              padding: '4px 8px',
-                              borderRadius: '6px',
-                              border: '1px solid #2d3442',
-                              gap: '6px',
-                              fontSize: '0.75rem',
-                              textDecoration: 'none',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = '#262c39';
-                              e.currentTarget.style.borderColor = 'var(--accent-gold, #FFD700)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = '#1f232d';
-                              e.currentTarget.style.borderColor = '#2d3442';
-                            }}
-                          >
-                            {provider.logo_path && (
-                              <img
-                                src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
-                                alt={provider.provider_name}
-                                style={{ width: '14px', height: '14px', borderRadius: '3px' }}
-                              />
-                            )}
-                            <span style={{ fontWeight: '600', color: '#FFF' }}>{provider.provider_name}</span>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {rent.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '800', textTransform: 'uppercase' }}>Rent / Buy</span>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        {rent.slice(0, 3).map((provider) => (
-                          <a
-                            key={provider.provider_id}
-                            href={getProviderLink(provider)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={`Rent on ${provider.provider_name}`}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              backgroundColor: '#1f232d',
-                              padding: '4px 8px',
-                              borderRadius: '6px',
-                              border: '1px solid #2d3442',
-                              gap: '6px',
-                              fontSize: '0.75rem',
-                              textDecoration: 'none',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = '#262c39';
-                              e.currentTarget.style.borderColor = 'var(--accent-gold, #FFD700)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = '#1f232d';
-                              e.currentTarget.style.borderColor = '#2d3442';
-                            }}
-                          >
-                            {provider.logo_path && (
-                              <img
-                                src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
-                                alt={provider.provider_name}
-                                style={{ width: '14px', height: '14px', borderRadius: '3px' }}
-                              />
-                            )}
-                            <span style={{ fontWeight: '600', color: '#FFF' }}>{provider.provider_name}</span>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div style={{ backgroundColor: '#161920', padding: '12px 14px', borderRadius: '12px', border: '1px solid #2b303c', fontSize: '0.75rem', color: '#94a3b8' }}>
-                  📺 Streaming info currently unavailable.
-                </div>
-              );
-            })()}
           </div>
 
           {/* Middle Column: Details, Cast & Reviews */}
@@ -464,6 +337,127 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist, user }) 
               <p className="detail-overview" style={{ color: '#cbd5e1', lineHeight: 1.7, fontSize: '0.95rem', margin: '0 0 24px 0' }}>
                 {movie.overview || 'No overview available.'}
               </p>
+
+              {/* OTT Watch Providers Section */}
+              {(() => {
+                const watchProviders = movie["watch/providers"]?.results?.IN || movie["watch/providers"]?.results?.US;
+                const flatrate = watchProviders?.flatrate || [];
+                const rent = watchProviders?.rent || [];
+                
+                const getProviderLink = (provider) => {
+                  const name = provider.provider_name || "";
+                  const normName = name.toLowerCase().trim();
+                  if (normName.includes("netflix")) return "https://www.netflix.com";
+                  if (normName.includes("prime video") || normName.includes("amazon video")) return "https://www.primevideo.com";
+                  if (normName.includes("hotstar")) return "https://www.hotstar.com";
+                  if (normName.includes("jiocinema")) return "https://www.jiocinema.com";
+                  if (normName.includes("zee5")) return "https://www.zee5.com";
+                  if (normName.includes("sonyliv")) return "https://www.sonyliv.com";
+                  if (normName.includes("apple tv")) return "https://tv.apple.com";
+                  
+                  return `https://www.google.com/search?q=watch+${encodeURIComponent(movie.title)}+on+${encodeURIComponent(name)}`;
+                };
+
+                return (flatrate.length > 0 || rent.length > 0) ? (
+                  <div style={{ marginTop: '24px', backgroundColor: '#161920', padding: '16px 20px', borderRadius: '12px', border: '1px solid #2b303c', maxWidth: '700px' }}>
+                    <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: '#FFF', margin: '0 0 12px 0', letterSpacing: '0.3px', textTransform: 'uppercase' }}>
+                      📺 Stream Availability (Click to Watch)
+                    </h4>
+                    
+                    {flatrate.length > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: rent.length > 0 ? '12px' : '0', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.85rem', color: '#888', width: '90px', fontWeight: '600' }}>Subscription:</span>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                          {flatrate.map((provider) => (
+                            <a
+                              key={provider.provider_id}
+                              href={getProviderLink(provider)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`Watch on ${provider.provider_name}`}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '6px 12px',
+                                border: '1px solid #2b2b2b',
+                                borderRadius: '6px',
+                                fontSize: '0.78rem',
+                                textDecoration: 'none',
+                                transition: 'all 0.2s ease',
+                                backgroundColor: '#141414'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--accent-gold, #FFD700)';
+                                e.currentTarget.style.backgroundColor = '#1f232d';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = '#2b2b2b';
+                                e.currentTarget.style.backgroundColor = '#141414';
+                              }}
+                            >
+                              {provider.logo_path && (
+                                <img
+                                  src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
+                                  alt={provider.provider_name}
+                                  style={{ width: '20px', height: '20px', borderRadius: '4px' }}
+                                />
+                              )}
+                              <span style={{ fontWeight: '500', color: '#FFF' }}>{provider.provider_name}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {rent.length > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.85rem', color: '#888', width: '90px', fontWeight: '600' }}>Rent / Buy:</span>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                          {rent.slice(0, 4).map((provider) => (
+                            <a
+                              key={provider.provider_id}
+                              href={getProviderLink(provider)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`Rent on ${provider.provider_name}`}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '6px 12px',
+                                border: '1px solid #2b2b2b',
+                                borderRadius: '6px',
+                                fontSize: '0.78rem',
+                                textDecoration: 'none',
+                                transition: 'all 0.2s ease',
+                                backgroundColor: '#141414'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--accent-gold, #FFD700)';
+                                e.currentTarget.style.backgroundColor = '#1f232d';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = '#2b2b2b';
+                                e.currentTarget.style.backgroundColor = '#141414';
+                              }}
+                            >
+                              {provider.logo_path && (
+                                <img
+                                  src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
+                                  alt={provider.provider_name}
+                                  style={{ width: '18px', height: '18px', borderRadius: '4px' }}
+                                />
+                              )}
+                              <span style={{ fontWeight: '500', color: '#FFF' }}>{provider.provider_name}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : null;
+              })()}
             </div>
 
             {/* Cast Section */}
