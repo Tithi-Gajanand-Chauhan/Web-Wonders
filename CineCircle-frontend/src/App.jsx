@@ -15,6 +15,7 @@ import Preferences from './pages/Preferences';
 import Recommendation from './pages/Recommendation';
 import AuthModal from './components/AuthModal';
 import IntroPage from './pages/IntroPage';
+import ExploreAll from './pages/ExploreAll';
 import './App.css';
 
 function App() {
@@ -196,6 +197,17 @@ function App() {
         <Route path="/lobby" element={<GroupLobby />} />
         <Route path="/preferences" element={<Preferences />} />
         <Route path="/recommendation" element={<Recommendation />} />
+        <Route
+          path="/explore/:section"
+          element={
+            <ExploreAll
+              onPlayTrailer={(movie) => setActiveTrailer(movie)}
+              onToggleWatchlist={toggleWatchlist}
+              isInWatchlist={isInWatchlist}
+              safeSearch={safeSearch}
+            />
+          }
+        />
       </Routes>
 
       {/* Video Trailer Playback Modal */}

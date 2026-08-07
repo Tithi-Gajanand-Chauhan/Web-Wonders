@@ -8,7 +8,6 @@ const HOVER_DELAY_MS = 350;
 function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isSaved }) {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
-  const [trailerSrc, setTrailerSrc] = useState(null);
   const hoverTimer = useRef(null);
   const isMouseInsideRef = useRef(false);
 
@@ -22,27 +21,10 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
     isMouseInsideRef.current = true;
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
 
-    hoverTimer.current = setTimeout(async () => {
-      if (!isMouseInsideRef.current) return;
-      setIsHovered(true);
-
-      // 1. Do we already know the correct trailer (curated movie / TRAILER_MAP)?
-      const knownKey = getMovieTrailerKey(movie);
-      if (knownKey) {
-        if (isMouseInsideRef.current) {
-          setTrailerSrc(getTrailerIframeUrl(movie, { autoplay: 1, mute: 1, loop: 1 }));
-        }
-        return;
+    hoverTimer.current = setTimeout(() => {
+      if (isMouseInsideRef.current) {
+        setIsHovered(true);
       }
-
-      // 2. Otherwise fetch the real trailer from the backend (TMDB videos endpoint)
-      const fetchedKey = await fetchMovieTrailer(movie.id);
-      if (fetchedKey && isMouseInsideRef.current) {
-        setTrailerSrc(
-          getTrailerIframeUrl({ ...movie, trailer_key: fetchedKey }, { autoplay: 1, mute: 1, loop: 1 })
-        );
-      }
-      // if fetchedKey is null, trailerSrc stays null -> poster just stays visible, no wrong video
     }, HOVER_DELAY_MS);
   };
 
@@ -53,10 +35,7 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
       hoverTimer.current = null;
     }
     setIsHovered(false);
-    setTrailerSrc(null); // unmount iframe so playback actually stops
   };
-
-  const isPlayingVideo = Boolean(trailerSrc);
 
   return (
     <div
@@ -71,26 +50,22 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
       )}
 
       <div className="movie-card">
-        <div className="poster-wrapper">
+        <div className="poster-wrapper" onClick={() => onPlayTrailer(movie)}>
           <img
             src={posterUrl}
             alt={movie.title}
-            className={`movie-poster-img ${isPlayingVideo ? 'fade-out' : ''}`}
+            className="movie-poster-img"
           />
 
           {movie.badge && <span className="poster-badge-tag">{movie.badge}</span>}
 
-          {isHovered && trailerSrc && (
-            <div className="trailer-preview-wrapper">
-              <iframe
-                src={trailerSrc}
-                title={`${movie.title} Preview`}
-                className="trailer-preview-iframe"
-                allow="autoplay; encrypted-media"
-                frameBorder="0"
-              />
+          <div className="poster-play-overlay">
+            <div className="poster-play-btn-circle">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
             </div>
-          )}
+          </div>
         </div>
 
         {isHovered && (

@@ -11,6 +11,9 @@ import {
   getAnimationMovies,
   getKoreanMovies,
   getChineseMovies,
+  getHindiMovies,
+  getGujaratiMovies,
+  getMarathiMovies,
   getGenres,
 } from '../services/api';
 
@@ -22,6 +25,9 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
     animation: [],
     korean: [],
     chinese: [],
+    hindi: [],
+    gujarati: [],
+    marathi: [],
   });
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,13 +40,16 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
     async function fetchAll() {
       try {
         setLoading(true);
-        const [popular, recent, scifi, animation, korean, chinese, genreData] = await Promise.all([
+        const [popular, recent, scifi, animation, korean, chinese, hindi, gujarati, marathi, genreData] = await Promise.all([
           getPopularMovies(),
           getRecentMovies(),
           getSciFiMovies(),
           getAnimationMovies(),
           getKoreanMovies(),
           getChineseMovies(),
+          getHindiMovies(),
+          getGujaratiMovies(),
+          getMarathiMovies(),
           getGenres(),
         ]);
 
@@ -51,6 +60,9 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
           animation: animation.results || [],
           korean: korean.results || [],
           chinese: chinese.results || [],
+          hindi: hindi.results || [],
+          gujarati: gujarati.results || [],
+          marathi: marathi.results || [],
         });
         setGenres(genreData.genres || []);
       } catch (err) {
@@ -89,6 +101,9 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
       animation: applyFilters(rows.animation),
       korean: applyFilters(rows.korean),
       chinese: applyFilters(rows.chinese),
+      hindi: applyFilters(rows.hindi),
+      gujarati: applyFilters(rows.gujarati),
+      marathi: applyFilters(rows.marathi),
     }),
     [rows, safeSearch, genreFilter, yearFilter, ratingFilter]
   );
@@ -106,6 +121,83 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
       )}
 
       <div className="home-content-container">
+        {/* Watch Party Quick-Start Banner */}
+        <div
+          style={{
+            background: "linear-gradient(135deg, #E50914 0%, #9B0F15 100%)",
+            borderRadius: "16px",
+            padding: "28px",
+            marginBottom: "32px",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "24px",
+            boxShadow: "0 8px 32px rgba(229, 9, 20, 0.25)",
+            border: "1px solid rgba(255, 255, 255, 0.15)",
+          }}
+        >
+          <div style={{ flex: "1 1 500px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "800", letterSpacing: "1.5px", textTransform: "uppercase", color: "#FFD700", display: "block", marginBottom: "6px" }}>
+              🍿 Collaborative Group Decision Engine
+            </span>
+            <h2 style={{ fontSize: "22px", fontWeight: "800", margin: "0 0 8px 0", color: "#FFF", letterSpacing: "-0.5px" }}>
+              Host an AI-Powered Watch Party Room!
+            </h2>
+            <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.9)", margin: 0, lineHeight: "1.5", maxWidth: "600px" }}>
+              Tired of endless scrolling? Gather your friends in a shared lobby, enter your moods, and let CineCircle negotiate your tastes to find the perfect movie compromise in 60 seconds!
+            </p>
+          </div>
+          
+          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+            <button
+              onClick={onOpenWatchParty}
+              style={{
+                padding: "12px 24px",
+                backgroundColor: "#FFFFFF",
+                color: "#000",
+                border: "none",
+                borderRadius: "10px",
+                fontWeight: "750",
+                fontSize: "14px",
+                cursor: "pointer",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+            >
+              Start a Room 🍿
+            </button>
+            
+            <button
+              onClick={onOpenWatchParty}
+              style={{
+                padding: "12px 24px",
+                backgroundColor: "transparent",
+                color: "#FFFFFF",
+                border: "2px solid #FFFFFF",
+                borderRadius: "10px",
+                fontWeight: "750",
+                fontSize: "14px",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => { 
+                e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)";
+                e.currentTarget.style.transform = "scale(1.03)";
+              }}
+              onMouseLeave={(e) => { 
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              Join Room 🎟️
+            </button>
+          </div>
+        </div>
+
         {/* Consolidated Dropdown Filters */}
         <FilterBar
           genres={genres}
@@ -129,12 +221,13 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
           <div className="status-message">Loading titles...</div>
         ) : (
           <>
-            <MovieRow
+             <MovieRow
               title="New Releases & Recent Hits"
               movies={filteredRows.recent}
               onPlayTrailer={onPlayTrailer}
               onToggleWatchlist={onToggleWatchlist}
               isInWatchlist={isInWatchlist}
+              section="recent"
             />
 
             <MovieRow
@@ -143,6 +236,7 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
               onPlayTrailer={onPlayTrailer}
               onToggleWatchlist={onToggleWatchlist}
               isInWatchlist={isInWatchlist}
+              section="popular"
             />
 
             <MovieRow
@@ -151,6 +245,7 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
               onPlayTrailer={onPlayTrailer}
               onToggleWatchlist={onToggleWatchlist}
               isInWatchlist={isInWatchlist}
+              section="scifi"
             />
 
             <MovieRow
@@ -159,6 +254,7 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
               onPlayTrailer={onPlayTrailer}
               onToggleWatchlist={onToggleWatchlist}
               isInWatchlist={isInWatchlist}
+              section="animation"
             />
 
             <MovieRow
@@ -167,14 +263,43 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
               onPlayTrailer={onPlayTrailer}
               onToggleWatchlist={onToggleWatchlist}
               isInWatchlist={isInWatchlist}
+              section="korean"
             />
 
-            <MovieRow
+             <MovieRow
               title="Chinese Cinema & Blockbusters"
               movies={filteredRows.chinese}
               onPlayTrailer={onPlayTrailer}
               onToggleWatchlist={onToggleWatchlist}
               isInWatchlist={isInWatchlist}
+              section="chinese"
+            />
+
+            <MovieRow
+              title="Bollywood & Hindi Blockbusters"
+              movies={filteredRows.hindi}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+              section="indian"
+            />
+
+            <MovieRow
+              title="Marathi Cinema & Hits"
+              movies={filteredRows.marathi}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+              section="marathi"
+            />
+
+            <MovieRow
+              title="Gujarati Cinema & Hits"
+              movies={filteredRows.gujarati}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+              section="gujarati"
             />
           </>
         )}

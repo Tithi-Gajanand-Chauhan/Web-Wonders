@@ -79,11 +79,11 @@ export function getMovieTrailerKey(movie) {
   return null;
 }
 
-export function getTrailerIframeUrl(movie, { autoplay = 1, mute = 1, loop = 1 } = {}) {
+export function getTrailerIframeUrl(movie, { autoplay = 1, mute = 1, loop = 1, controls = 0 } = {}) {
   const key = getMovieTrailerKey(movie);
   if (!key) return null;
 
-  return `https://www.youtube.com/embed/${key}?autoplay=${autoplay}&mute=${mute}&controls=0&modestbranding=1&rel=0&enablejsapi=1${
+  return `https://www.youtube.com/embed/${key}?autoplay=${autoplay}&mute=${mute}&controls=${controls}&modestbranding=1&rel=0&enablejsapi=1${
     loop ? `&loop=1&playlist=${key}` : ''
   }`;
 }
@@ -499,6 +499,70 @@ export const getMovieDetails = async (id) => {
       crew: [{ id: 99, job: 'Director', name: 'Christopher Nolan' }]
     }
   };
+};
+
+export const getAwardMovies = async (page = 1) => {
+  return { results: CURATED_MOVIES.filter(m => m.badge?.toLowerCase().includes('oscar') || m.badge?.toLowerCase().includes('winner') || m.vote_average >= 8.2) };
+};
+
+export const getHollywoodMovies = async (page = 1) => {
+  return { results: CURATED_MOVIES.filter(m => m.original_language === 'en') };
+};
+
+export const getActionMovies = async (page = 1) => {
+  return { results: CURATED_MOVIES.filter(m => m.genre_ids?.includes(28)) };
+};
+
+export const getHorrorMovies = async (page = 1) => {
+  return { results: CURATED_MOVIES.filter(m => m.genre_ids?.includes(27)) };
+};
+
+export const getThrillerMovies = async (page = 1) => {
+  return { results: CURATED_MOVIES.filter(m => m.genre_ids?.includes(53)) };
+};
+
+export const getRomanceMovies = async (page = 1) => {
+  return { results: CURATED_MOVIES.filter(m => m.genre_ids?.includes(10749)) };
+};
+
+export const getJapaneseMovies = async (page = 1) => {
+  return { results: CURATED_MOVIES.filter(m => m.original_language === 'ja') };
+};
+
+export const getIndianMovies = async (page = 1) => {
+  try {
+    const response = await api.get('/movies/hindi', { params: { page } });
+    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
+  } catch (e) {}
+  return { results: CURATED_MOVIES.filter(m => m.original_language === 'hi' || m.original_language === 'ta' || m.original_language === 'te') };
+};
+
+export const getHindiMovies = async (page = 1) => {
+  try {
+    const response = await api.get('/movies/hindi', { params: { page } });
+    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
+  } catch (e) {}
+  return { results: CURATED_MOVIES.filter(m => m.original_language === 'hi') };
+};
+
+export const getGujaratiMovies = async (page = 1) => {
+  try {
+    const response = await api.get('/movies/gujarati', { params: { page } });
+    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
+  } catch (e) {}
+  return { results: CURATED_MOVIES.filter(m => m.original_language === 'gu') };
+};
+
+export const getMarathiMovies = async (page = 1) => {
+  try {
+    const response = await api.get('/movies/marathi', { params: { page } });
+    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
+  } catch (e) {}
+  return { results: CURATED_MOVIES.filter(m => m.original_language === 'mr') };
+};
+
+export const getSpanishMovies = async (page = 1) => {
+  return { results: CURATED_MOVIES.filter(m => m.original_language === 'es') };
 };
 
 export default api;
