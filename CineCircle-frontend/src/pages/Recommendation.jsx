@@ -56,6 +56,7 @@ function Recommendation() {
   const [recommendations, setRecommendations] = useState(savedRecommendations);
   const [compatibility, setCompatibility] = useState(savedCompatibility);
   const [summary, setSummary] = useState(savedSummary);
+  const [compatibilityAnalysis, setCompatibilityAnalysis] = useState(null);
   const [voteCounts, setVoteCounts] = useState({});
   const [winner, setWinner] = useState(null);
   const [votedMovies, setVotedMovies] = useState({});
@@ -88,6 +89,7 @@ function Recommendation() {
           const recs = Array.isArray(data.recommendations) ? data.recommendations : (data.recommendations || []);
           setRecommendations(recs);
           setCompatibility(data.groupCompatibilityScore || 80);
+          setCompatibilityAnalysis(data.compatibilityAnalysis || null);
           setSummary(data.negotiationSummary || "");
           setHasPrev(data.hasPrev || false);
         }
@@ -116,6 +118,7 @@ function Recommendation() {
         const recs = Array.isArray(data.recommendations) ? data.recommendations : (data.recommendations || []);
         setRecommendations(recs);
         setCompatibility(data.groupCompatibilityScore || 80);
+        setCompatibilityAnalysis(data.compatibilityAnalysis || null);
         setSummary(data.negotiationSummary || "");
         setHasPrev(data.hasPrev || false);
       } else {
@@ -147,6 +150,7 @@ function Recommendation() {
         const recs = Array.isArray(data.recommendations) ? data.recommendations : (data.recommendations || []);
         setRecommendations(recs);
         setCompatibility(data.groupCompatibilityScore || 80);
+        setCompatibilityAnalysis(data.compatibilityAnalysis || null);
         setSummary(data.negotiationSummary || "");
         setHasPrev(data.hasPrev || false);
       } else {
@@ -416,6 +420,166 @@ function Recommendation() {
             </p>
           )}
         </div>
+
+        {/* Compatibility Analytics Section */}
+        {compatibilityAnalysis && (
+          <div
+            className="compatibility-analytics-card"
+            style={{
+              background: "linear-gradient(135deg, #1F1F1F 0%, #171717 100%)",
+              border: "1px solid #333",
+              borderRadius: "16px",
+              padding: "28px",
+              marginBottom: "32px",
+              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: "18px",
+                fontWeight: "800",
+                color: "#E50914",
+                marginTop: 0,
+                marginBottom: "20px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                letterSpacing: "-0.3px",
+              }}
+            >
+              📊 Compatibility Analytics
+            </h2>
+
+            {/* Pairwise Matches Grid */}
+            {compatibilityAnalysis.pairwise && compatibilityAnalysis.pairwise.length > 0 ? (
+              <div style={{ marginBottom: "24px" }}>
+                <h3 style={{ fontSize: "13px", color: "#888", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "14px" }}>
+                  Member Pairwise Match Matrix
+                </h3>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "14px" }}>
+                  {compatibilityAnalysis.pairwise.map((pair, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        backgroundColor: "#262626",
+                        padding: "16px",
+                        borderRadius: "12px",
+                        border: "1px solid #363636",
+                        transition: "transform 0.2s ease, border-color 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.borderColor = "#E5091488";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "none";
+                        e.currentTarget.style.borderColor = "#363636";
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <span style={{ fontSize: "14px", fontWeight: "700", color: "#FFF" }}>
+                          👥 {pair.user1} + {pair.user2}
+                        </span>
+                        <span style={{ fontSize: "14px", fontWeight: "800", color: "#E50914" }}>
+                          {pair.score}% Match
+                        </span>
+                      </div>
+                      {/* Progress Bar */}
+                      <div
+                        style={{
+                          height: "6px",
+                          width: "100%",
+                          backgroundColor: "#3a3a3a",
+                          borderRadius: "3px",
+                          overflow: "hidden",
+                          marginBottom: "8px"
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: "100%",
+                            width: `${pair.score}%`,
+                            backgroundColor: "#E50914",
+                            borderRadius: "3px",
+                            transition: "width 0.5s ease-in-out",
+                          }}
+                        />
+                      </div>
+                      {pair.sharedGenres && pair.sharedGenres.length > 0 ? (
+                        <div style={{ fontSize: "11px", color: "#888", display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "8px" }}>
+                          <span style={{ color: "#aaa" }}>Shared:</span>
+                          {pair.sharedGenres.map((g, i) => (
+                            <span key={i} style={{ backgroundColor: "#1e1e1e", padding: "1px 6px", borderRadius: "4px", fontSize: "10px" }}>{g}</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: "11px", color: "#666", marginTop: "8px" }}>No shared genres selected</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{ backgroundColor: "#262626", padding: "16px", borderRadius: "12px", border: "1px solid #363636", color: "#888", fontSize: "13px", textAlign: "center", marginBottom: "24px" }}>
+                Add more members to compute member-to-member compatibility!
+              </div>
+            )}
+
+            {/* Shared Agreements & Resolved Conflicts */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                gap: "20px",
+              }}
+            >
+              {/* Agreements (Shared Tastes) */}
+              <div
+                style={{
+                  backgroundColor: "#262626",
+                  padding: "18px",
+                  borderRadius: "12px",
+                  border: "1px solid #363636",
+                }}
+              >
+                <h4 style={{ fontSize: "14px", color: "#4CAF50", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 12px 0", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>✓</span> Shared Tastes (Agreements)
+                </h4>
+                <ul style={{ margin: 0, paddingLeft: "18px", color: "#B0B0B0", fontSize: "13px", lineHeight: "1.6" }}>
+                  {compatibilityAnalysis.agreements && compatibilityAnalysis.agreements.map((item, idx) => (
+                    <li key={idx} style={{ marginBottom: "6px" }}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Conflicts (Negotiated Points) */}
+              <div
+                style={{
+                  backgroundColor: "#262626",
+                  padding: "18px",
+                  borderRadius: "12px",
+                  border: "1px solid #363636",
+                }}
+              >
+                <h4 style={{ fontSize: "14px", color: "#FF9800", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 12px 0", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>⚡</span> Resolved Conflicts (Negotiations)
+                </h4>
+                <ul style={{ margin: 0, paddingLeft: "18px", color: "#B0B0B0", fontSize: "13px", lineHeight: "1.6" }}>
+                  {compatibilityAnalysis.conflicts && compatibilityAnalysis.conflicts.map((item, idx) => (
+                    <li key={idx} style={{ marginBottom: "6px" }}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Winner Header Bar */}
         <div

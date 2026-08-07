@@ -418,6 +418,9 @@ calculateCompatibilityScore(
   )
 ),
 
+compatibilityAnalysis:
+generateCompatibilityAnalysis(groupPreferences),
+
 
 negotiationSummary:
 result.negotiationSummary ||
@@ -454,6 +457,92 @@ candidatePool
 
 }
 
+
+function generateCompatibilityAnalysis(groupPreferences) {
+  const users = groupPreferences || [];
+  const genreMap = {
+    Action: 28,
+    Comedy: 35,
+    Romance: 10749,
+    Drama: 18,
+    Thriller: 53,
+    Horror: 27,
+    Animation: 16,
+    Adventure: 12,
+    Fantasy: 14,
+    "Science Fiction": 878,
+    "Sci-Fi": 878,
+  };
+
+  if (users.length <= 1) {
+    return {
+      pairwise: [],
+      agreements: ["Add more members to analyze group dynamics!"],
+      conflicts: ["No conflicts to negotiate yet."]
+    };
+  }
+
+  const pairwise = [];
+  const genresCount = {};
+  const moodsCount = {};
+  const languagesCount = {};
+
+  users.forEach(u => {
+    (u.genres || []).forEach(g => {
+      genresCount[g] = (genresCount[g] || 0) + 1;
+    });
+    if (u.mood) moodsCount[u.mood] = (moodsCount[u.mood] || 0) + 1;
+    if (u.language) languagesCount[u.language] = (languagesCount[u.language] || 0) + 1;
+  });
+
+  for (let i = 0; i < users.length; i++) {
+    for (let j = i + 1; j < users.length; j++) {
+      const u1 = users[i];
+      const u2 = users[j];
+
+      const g1 = new Set(u1.genres || []);
+      const g2 = new Set(u2.genres || []);
+      const intersection = new Set([...g1].filter(x => g2.has(x)));
+      const union = new Set([...g1, ...g2]);
+      const genreSim = union.size > 0 ? (intersection.size / union.size) * 100 : 100;
+
+      const moodSim = u1.mood === u2.mood ? 100 : 0;
+      const langSim = u1.language === u2.language ? 100 : 0;
+
+      const pairScore = Math.round((genreSim * 0.4) + (langSim * 0.3) + (moodSim * 0.3));
+
+      pairwise.push({
+        user1: u1.user,
+        user2: u2.user,
+        score: pairScore,
+        sharedGenres: Array.from(intersection)
+      });
+    }
+  }
+
+  const agreements = [];
+  const threshold = users.length / 2;
+  Object.keys(genresCount).forEach(g => {
+    if (genresCount[g] > threshold) {
+      agreements.push(`Genre: ${g} (${Math.round((genresCount[g] / users.length) * 100)}% agree)`);
+    }
+  });
+
+  const conflicts = [];
+  if (Object.keys(genresCount).length > 2 && agreements.length === 0) {
+    conflicts.push("Multiple genres selected with no dominant preference.");
+  }
+  const uniqueMoods = Object.keys(moodsCount);
+  if (uniqueMoods.length > 1) {
+    conflicts.push(`Mood split: Some want ${uniqueMoods.slice(0, 2).join(", ")}`);
+  }
+
+  return {
+    pairwise,
+    agreements: agreements.length > 0 ? agreements : ["No dominant shared genre; recommendations balanced automatically."],
+    conflicts: conflicts.length > 0 ? conflicts : ["Minor conflicts resolved automatically."]
+  };
+}
 
 function calculateCompatibilityScore(
   groupPreferences,
@@ -635,6 +724,9 @@ calculateCompatibilityScore(
   groupPreferences,
   filteredMovies
 ),
+
+compatibilityAnalysis:
+generateCompatibilityAnalysis(groupPreferences),
 
 negotiationSummary:
  negotiationSummary,
