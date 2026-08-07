@@ -63,6 +63,24 @@ function Recommendation() {
   const [copied, setCopied] = useState(false);
   const [hasPrev, setHasPrev] = useState(false);
   const [loadingRecs, setLoadingRecs] = useState(false);
+  const [groupWatchlist, setGroupWatchlist] = useState([]);
+
+  // Fetch group watchlist on mount
+  useEffect(() => {
+    if (!groupCode) return;
+    async function fetchWatchlist() {
+      try {
+        const res = await fetch(`http://localhost:5000/api/groups/group/${groupCode}`);
+        const data = await res.json();
+        if (data && data.watchlist) {
+          setGroupWatchlist(data.watchlist);
+        }
+      } catch (err) {
+        console.error("Error fetching group watchlist:", err);
+      }
+    }
+    fetchWatchlist();
+  }, [groupCode]);
 
   // Sync state if passed via router location state
   useEffect(() => {
@@ -684,6 +702,76 @@ function Recommendation() {
           </div>
         )}
 
+        {/* Shared Watchlist Horizontal Tray */}
+        {groupWatchlist.length > 0 && (
+          <div
+            style={{
+              background: "linear-gradient(135deg, #1A1A1A 0%, #111111 100%)",
+              border: "1px solid #2B2B2B",
+              borderRadius: "16px",
+              padding: "20px 24px",
+              marginBottom: "32px",
+              boxShadow: "0 6px 20px rgba(0,0,0,0.4)"
+            }}
+          >
+            <h3 style={{ margin: "0 0 16px 0", fontSize: "15px", fontWeight: "800", color: "#FFD700", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>🍿</span> Shared Room Watchlist ({groupWatchlist.length})
+            </h3>
+            <div style={{ display: "flex", gap: "16px", overflowX: "auto", paddingBottom: "10px", scrollbarWidth: "thin" }}>
+              {groupWatchlist.map((m) => (
+                <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", flexShrink: 0, width: "86px", textAlign: "center" }}>
+                  <div style={{ position: "relative", width: "76px", height: "110px" }}>
+                    <img
+                      src={m.poster_path ? (m.poster_path.startsWith('/') ? `https://image.tmdb.org/t/p/w92${m.poster_path}` : m.poster_path) : 'https://via.placeholder.com/92x138'}
+                      alt={m.title}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px", border: "1px solid #333" }}
+                    />
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          await fetch(`http://localhost:5000/api/groups/${groupCode}/watchlist/remove`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ movieId: m.id })
+                          });
+                          setGroupWatchlist(prev => prev.filter(item => item.id !== m.id));
+                        } catch (err) {
+                          console.error("Remove error:", err);
+                        }
+                      }}
+                      style={{
+                        position: "absolute",
+                        top: "-6px",
+                        right: "-6px",
+                        width: "18px",
+                        height: "18px",
+                        borderRadius: "50%",
+                        backgroundColor: "#EF4444",
+                        color: "#FFF",
+                        border: "none",
+                        fontSize: "9px",
+                        fontWeight: "900",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.5)"
+                      }}
+                      title="Remove"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <span style={{ fontSize: "11px", color: "#EEE", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>
+                    {m.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {loadingRecs && (
           <div style={{ textAlign: "center", padding: "40px", color: "#E50914", fontWeight: "700", border: "1px dashed rgba(229, 9, 20, 0.3)", borderRadius: "16px", marginBottom: "24px" }}>
             🔄 Finding alternative movies... Please wait...
@@ -907,6 +995,51 @@ function Recommendation() {
                       }}
                     >
                       {isVotedByMe ? "✓ Voted" : "👍 Vote"}
+                    </button>
+
+                    <button
+                      onClick={async () => {
+                        try {
+                          const movieObj = {
+                            id: movie.movieId || movie.id,
+                            title: movie.title,
+                            poster_path: movie.poster || movie.poster_path,
+                            vote_average: Number(movie.rating) || 7.5,
+                            release_date: movie.releaseDate || movie.year || "2026",
+                            overview: movie.overview || ""
+                          };
+
+                          const res = await fetch(`http://localhost:5000/api/groups/${groupCode}/watchlist/add`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ movie: movieObj })
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            setGroupWatchlist(prev => {
+                              const exists = prev.some(m => m.id === movieObj.id);
+                              if (!exists) return [...prev, movieObj];
+                              return prev;
+                            });
+                            alert(`"${movie.title}" saved to the Shared Room Watchlist! 🍿`);
+                          }
+                        } catch (err) {
+                          console.error("Failed to add to shared watchlist:", err);
+                        }
+                      }}
+                      style={{
+                        padding: "8px 16px",
+                        backgroundColor: "#1F1F1F",
+                        color: "#FFD700",
+                        border: "1px solid rgba(255, 215, 0, 0.4)",
+                        borderRadius: "8px",
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      🍿 Save to Room
                     </button>
 
                     <span

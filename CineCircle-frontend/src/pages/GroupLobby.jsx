@@ -15,6 +15,7 @@ function GroupLobby() {
   const [members, setMembers] = useState(initialMembers);
   const [copied, setCopied] = useState(false);
   const [generating,setGenerating] = useState(false);
+  const [groupWatchlist, setGroupWatchlist] = useState([]);
 
   useEffect(() => {
     if (!groupCode) return;
@@ -84,40 +85,23 @@ function GroupLobby() {
 
 
 useEffect(() => {
-
-  const interval = setInterval(async()=>{
-
-    try{
-
+  const interval = setInterval(async () => {
+    try {
       const response = await fetch(
         `http://localhost:5000/api/groups/${groupCode}`
       );
-
-
       const data = await response.json();
-
-
-      setMembers(data.members);
-
-
+      if (data.success) {
+        setMembers(data.members || []);
+        setGroupWatchlist(data.watchlist || []);
+      }
+    } catch (error) {
+      console.log("Member sync error:", error);
     }
-    catch(error){
+  }, 3000);
 
-      console.log(
-        "Member sync error:",
-        error
-      );
-
-    }
-
-
-  },3000);
-
-
-  return ()=>clearInterval(interval);
-
-
-},[groupCode]);
+  return () => clearInterval(interval);
+}, [groupCode]);
 
   if (!groupName || !groupCode) {
     return (
@@ -384,6 +368,103 @@ useEffect(() => {
               </p>
             )}
           </div>
+        </div>
+
+        {/* Shared Room Watchlist Section */}
+        <div style={{
+          marginTop: "24px",
+          padding: "20px",
+          backgroundColor: "#111111",
+          border: "1px solid #2C2C2C",
+          borderRadius: "14px",
+          textAlign: "left"
+        }}>
+          <h3 style={{
+            margin: "0 0 16px 0",
+            fontSize: "15px",
+            fontWeight: "800",
+            color: "#FFF",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px"
+          }}>
+            <span>🍿</span> Shared Room Watchlist ({groupWatchlist.length})
+          </h3>
+
+          {groupWatchlist.length > 0 ? (
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              maxHeight: "220px",
+              overflowY: "auto",
+              paddingRight: "4px"
+            }}>
+              {groupWatchlist.map((movie) => (
+                <div
+                  key={movie.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    backgroundColor: "#161616",
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid #222"
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                    <img
+                      src={movie.poster_path ? (movie.poster_path.startsWith('/') ? `https://image.tmdb.org/t/p/w92${movie.poster_path}` : movie.poster_path) : 'https://via.placeholder.com/92x138'}
+                      alt={movie.title}
+                      style={{ width: "32px", height: "48px", objectFit: "cover", borderRadius: "4px" }}
+                    />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: "700", fontSize: "14px", color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {movie.title}
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#888" }}>
+                        Rating: {movie.vote_average?.toFixed(1) || "7.5"} • {movie.release_date?.split('-')[0] || "2026"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        await fetch(`http://localhost:5000/api/groups/${groupCode}/watchlist/remove`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ movieId: movie.id })
+                        });
+                        // Optimistic update
+                        setGroupWatchlist(prev => prev.filter(m => m.id !== movie.id));
+                      } catch (err) {
+                        console.error("Remove error:", err);
+                      }
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#EF4444",
+                      fontSize: "12px",
+                      fontWeight: "750",
+                      cursor: "pointer",
+                      padding: "4px 8px",
+                      borderRadius: "4px"
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: "#777", fontSize: "13px", margin: "10px 0" }}>
+              No movies saved yet. Save compromise recommendations below to see them here!
+            </p>
+          )}
         </div>
 
         {/* Footer Text */}

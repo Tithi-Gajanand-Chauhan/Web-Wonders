@@ -114,7 +114,8 @@ router.get("/:code", async (req, res) => {
       groupName: group.groupName,
       members: group.members,
       preferencesCount: group.preferences.length,
-      votes: group.votes
+      votes: group.votes,
+      watchlist: group.watchlist || []
     });
   } catch (error) {
     console.error("Get group state error:", error);
@@ -470,6 +471,66 @@ router.get("/group/:groupCode", async (req, res) => {
   } catch (error) {
     console.error("Get group error:", error);
     res.status(500).json({ error: "Failed to fetch group" });
+  }
+});
+
+// Add movie to group's shared watchlist
+router.post("/:code/watchlist/add", async (req, res) => {
+  const { movie } = req.body;
+  const { code } = req.params;
+
+  if (!movie || !movie.id) {
+    return res.status(400).json({ success: false, error: "Missing movie details" });
+  }
+
+  try {
+    const group = await db.getGroup(code);
+    if (!group) {
+      return res.status(404).json({ success: false, error: "Group not found" });
+    }
+
+    if (!group.watchlist) {
+      group.watchlist = [];
+    }
+
+    // Check duplicate
+    const exists = group.watchlist.some(m => m.id === movie.id);
+    if (!exists) {
+      group.watchlist.push(movie);
+      await db.saveGroup(code, group);
+    }
+
+    res.json({ success: true, watchlist: group.watchlist });
+  } catch (error) {
+    console.error("Add to group watchlist error:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+// Remove movie from group's shared watchlist
+router.post("/:code/watchlist/remove", async (req, res) => {
+  const { movieId } = req.body;
+  const { code } = req.params;
+
+  if (!movieId) {
+    return res.status(400).json({ success: false, error: "Missing movieId" });
+  }
+
+  try {
+    const group = await db.getGroup(code);
+    if (!group) {
+      return res.status(404).json({ success: false, error: "Group not found" });
+    }
+
+    if (group.watchlist) {
+      group.watchlist = group.watchlist.filter(m => m.id !== Number(movieId));
+      await db.saveGroup(code, group);
+    }
+
+    res.json({ success: true, watchlist: group.watchlist || [] });
+  } catch (error) {
+    console.error("Remove from group watchlist error:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
 

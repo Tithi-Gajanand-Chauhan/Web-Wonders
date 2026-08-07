@@ -327,23 +327,45 @@ async function getMovieDetails(movieId) {
 
 async function getMovieVideos(movieId) {
   try {
-    const data = await fetchFromTMDB(`/movie/${movieId}/videos`, {});
-    if (!data || !Array.isArray(data.results)) {
+    const data = await fetchFromTMDB(`/movie/${movieId}/videos`, {
+      include_video_language: 'en,hi,ta,te,mr,gu,ko,zh,ja,es,fr,de,it,null'
+    });
+    if (!data || !Array.isArray(data.results) || data.results.length === 0) {
       return { trailerKey: null };
     }
 
-    const youtubeTrailers = data.results.filter(
-      (video) => video.site === 'YouTube' && video.type === 'Trailer'
+    // 1. Try finding official YouTube trailers first
+    let selected = data.results.find(
+      (v) => v.site === 'YouTube' && v.type === 'Trailer' && v.official === true
     );
 
-    if (youtubeTrailers.length === 0) {
-      return { trailerKey: null };
+    // 2. Try any YouTube trailer
+    if (!selected) {
+      selected = data.results.find(
+        (v) => v.site === 'YouTube' && v.type === 'Trailer'
+      );
     }
 
-    const officialTrailer = youtubeTrailers.find((v) => v.official === true);
-    const selectedTrailer = officialTrailer || youtubeTrailers[0];
+    // 3. Try any official YouTube teaser or clip
+    if (!selected) {
+      selected = data.results.find(
+        (v) => v.site === 'YouTube' && (v.type === 'Teaser' || v.type === 'Clip') && v.official === true
+      );
+    }
 
-    return { trailerKey: selectedTrailer.key || null };
+    // 4. Try any YouTube teaser, clip, or video
+    if (!selected) {
+      selected = data.results.find(
+        (v) => v.site === 'YouTube' && (v.type === 'Teaser' || v.type === 'Clip' || v.type === 'Featurette')
+      );
+    }
+
+    // 5. Fallback to absolutely any YouTube video listed
+    if (!selected) {
+      selected = data.results.find((v) => v.site === 'YouTube');
+    }
+
+    return { trailerKey: selected ? selected.key : null };
   } catch (err) {
     console.error(`Error in getMovieVideos for ID ${movieId}:`, err.message);
     return { trailerKey: null };
