@@ -305,18 +305,6 @@ async function fetchFromTMDB(endpoint, params = {}) {
 
   const response = await tmdbClient.get(endpoint, { params });
   let data = response.data;
-  if (data) {
-    if (Array.isArray(data.results)) {
-      data.results = data.results.map(movie => {
-        if (movie && movie.original_title) {
-          movie.title = movie.original_title;
-        }
-        return movie;
-      });
-    } else if (data.original_title) {
-      data.title = data.original_title;
-    }
-  }
   setCache(cacheKey, data);
   return data;
 }
@@ -333,7 +321,7 @@ async function searchMovies(query, page = 1) {
 
 async function getMovieDetails(movieId) {
   return fetchFromTMDB(`/movie/${movieId}`, {
-    append_to_response: 'credits',
+    append_to_response: 'credits,watch/providers',
   });
 }
 

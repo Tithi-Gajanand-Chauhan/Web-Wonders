@@ -811,7 +811,7 @@ function Recommendation() {
                           fontWeight: "600",
                         }}
                       >
-                        ⭐ {movie.rating || "N/A"}
+                        ⭐ {movie.rating ? Number(movie.rating).toFixed(1) : "N/A"}
                       </span>
                     </div>
 

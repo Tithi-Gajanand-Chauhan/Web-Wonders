@@ -160,7 +160,7 @@ async function getCandidateMovies(groupPreferences) {
 
   return uniqueMovies.map(movie => ({
     id: movie.id,
-    title: movie.original_title || movie.title,
+    title: movie.title || movie.original_title,
     overview: movie.overview,
     genres: movie.genre_ids,
     language: movie.original_language,
@@ -428,7 +428,11 @@ result.negotiationSummary ||
 
 
 recommendations:
-enrichedRecommendations
+enrichedRecommendations.sort((a, b) => {
+  const dateA = a.releaseDate || "";
+  const dateB = b.releaseDate || "";
+  return dateB.localeCompare(dateA);
+})
 
 
 };
@@ -764,57 +768,97 @@ return {
             : "TOP MOVIE"
         };
       })
+      .sort((a, b) => {
+        const dateA = a.releaseDate || "";
+        const dateB = b.releaseDate || "";
+        return dateB.localeCompare(dateA);
+      })
   };
 }
 
 function generateMockAIReason(movie, groupPreferences) {
   const users = groupPreferences || [];
-  const genres = [...new Set(users.flatMap(u => u.genres || []))];
-  const moods = [...new Set(users.map(u => u.mood).filter(Boolean))];
-  const languages = [...new Set(users.map(u => u.language).filter(Boolean))];
-  
-  let baseReason = "";
-  const title = movie.title ? movie.title.toLowerCase() : "";
-  const id = Number(movie.id || movie.movieId);
+  const title = movie.title || "This movie";
+  const id = Number(movie.id || movie.movieId || 0);
+  const titleLower = movie.title ? movie.title.toLowerCase() : "";
 
-  if (id === 101 || title.includes("interstellar")) {
-    baseReason = "Interstellar is a cosmic masterpiece that blends deep space exploration with high emotional stakes.";
-  } else if (id === 102 || title.includes("inception")) {
-    baseReason = "Inception delivers a mind-bending dream heist with spectacular action sequences that keep everyone on edge.";
-  } else if (id === 103 || title.includes("dark knight")) {
-    baseReason = "The Dark Knight is the gold standard for thrillers, offering a gripping psychological duel between Batman and the Joker.";
-  } else if (id === 104 || title.includes("spirited away")) {
-    baseReason = "Spirited Away is a whimsical, hand-drawn fantasy adventure that transports viewers to a stunning spiritual realm.";
-  } else if (id === 105 || title.includes("parasite")) {
-    baseReason = "Parasite is a brilliant genre-fluid masterpiece that transitions from black comedy to tense thriller seamlessly.";
-  } else if (id === 106 || title.includes("3 idiots")) {
-    baseReason = "3 Idiots is a legendary comedy-drama that celebrates college friendship while delivering a heartfelt message about following your dreams.";
-  } else if (id === 107 || title.includes("dangal")) {
-    baseReason = "Dangal is a powerhouse biographical drama about determination, offering spectacular wrestling action and deep family bonds.";
-  } else if (id === 108 || title.includes("lagaan")) {
-    baseReason = "Lagaan is an epic historical drama that combines sports drama, patriotism, and romance in a beautifully told village tale.";
-  } else if (id === 109 || title.includes("chello divas")) {
-    baseReason = "Chello Divas is the definitive Gujarati buddy comedy, capturing college nostalgia and hilarious friend group dynamics.";
-  } else if (id === 110 || title.includes("hellaro")) {
-    baseReason = "Hellaro is a National Award-winning Gujarati drama that showcases self-expression, rhythm, and liberation against patriarchal norms.";
-  } else if (id === 111 || title.includes("your name")) {
-    baseReason = "Your Name is a breathtakingly animated romance about two teenagers who swap bodies, offering fantasy elements and high emotional resonance.";
-  } else if (id === 112 || title.includes("super 30")) {
-    baseReason = "Super 30 is an inspiring true story about education, triumph against odds, and the power of mentorship.";
-  } else if (id === 113 || title.includes("krrish")) {
-    baseReason = "Krrish is a pioneering superhero action movie, delivering high-flying stunts and special effects that are fun for the entire group.";
-  } else if (id === 114 || title.includes("koi... mil gaya")) {
-    baseReason = "Koi... Mil Gaya is a classic sci-fi drama about friendship with an alien, providing heartwarming nostalgia and fun for all ages.";
-  } else if (id === 106 || title.includes("toy story")) {
-    baseReason = "Toy Story 4 is a heartwarming animated journey that explores friendship, purpose, and moving on with stellar animation.";
-  } else {
-    baseReason = `${movie.title} is an engaging selection that balances group tastes in entertainment.`;
+  // Hardcoded special reasons for top classic mock titles to keep them extremely premium
+  if (id === 101 || titleLower.includes("interstellar")) {
+    return "Interstellar is a cosmic masterpiece that blends deep space exploration with high emotional stakes, matching your interest in Sci-Fi.";
+  }
+  if (id === 102 || titleLower.includes("inception")) {
+    return "Inception delivers a mind-bending dream heist with spectacular action sequences that keep everyone on edge, perfect for thrill-seekers.";
+  }
+  if (id === 103 || titleLower.includes("dark knight")) {
+    return "The Dark Knight is the gold standard for thrillers, offering a gripping psychological duel between Batman and the Joker.";
+  }
+  if (id === 105 || titleLower.includes("parasite")) {
+    return "Parasite is a brilliant genre-fluid masterpiece that transitions from black comedy to tense thriller seamlessly, loved worldwide.";
+  }
+  if (id === 106 || titleLower.includes("3 idiots")) {
+    return "3 Idiots is a legendary comedy-drama that celebrates college friendship while delivering a heartfelt message about following your dreams.";
   }
 
-  const moodText = moods.length > 0 ? `It perfectly complements your group's current ${moods.join("/")} mood.` : "";
-  const langText = languages.length > 0 ? `It is served in your requested ${languages.join("/")} language.` : "";
+  // Dynamic Generator for all other real TMDB movies
+  const matchedNames = [];
+  const movieGenres = movie.genres || [];
   
-  return `${baseReason} ${moodText} ${langText}`.trim();
+  users.forEach(u => {
+    const userGenreIds = (u.genres || []).map(g => genreMap[g]).filter(Boolean);
+    const hasOverlap = userGenreIds.some(id => movieGenres.includes(id));
+    if (hasOverlap) {
+      matchedNames.push(u.user);
+    }
+  });
+
+  const genreNames = movieGenres
+    .map(id => genreIdToName[id])
+    .filter(Boolean)
+    .slice(0, 2);
+
+  const genreSegment = genreNames.length > 0 ? genreNames.join(" & ") : "popular catalog genres";
+
+  // Select deterministic phrasing indices based on the movie ID
+  const tempIdx = id % 3;
+
+  let introduction = "";
+  if (tempIdx === 0) {
+    introduction = `CineCircle selected ${title} to balance your group's tastes.`;
+  } else if (tempIdx === 1) {
+    introduction = `${title} stands out as a top contender for tonight's watchlist.`;
+  } else {
+    introduction = `If you are looking for an engaging watch, ${title} is a great fit.`;
+  }
+
+  let explanation = "";
+  if (matchedNames.length === users.length && users.length > 1) {
+    const choices = [
+      `It represents a strong middle-ground option, aligning with everyone's interest in ${genreSegment}.`,
+      `Since everyone in the group enjoys ${genreSegment}, this is a safe bet for a fun night.`,
+      `It perfectly satisfies the group's collective preference for ${genreSegment}.`
+    ];
+    explanation = choices[id % choices.length];
+  } else if (matchedNames.length > 0) {
+    const choices = [
+      `It directly matches what ${matchedNames.join(" and ")} wanted to watch (${genreSegment}).`,
+      `It caters specifically to the ${genreSegment} genre requested by ${matchedNames.join(" & ")}.`,
+      `This pick highlights the shared interest of ${matchedNames.join(" and ")} in high-quality ${genreSegment}.`
+    ];
+    explanation = choices[id % choices.length];
+  } else {
+    explanation = `It introduces an exciting ${genreSegment} experience to diversify the group's options.`;
+  }
+
+  const rating = movie.rating || movie.vote_average || 7.0;
+  let ratingText = "";
+  const ratingChoices = [
+    `It currently holds a certified ${Number(rating).toFixed(1)}/10 user score on TMDB.`,
+    `Audiences highly rate this title at ${Number(rating).toFixed(1)}/10.`,
+    `It offers a proven entertainment experience (rated ${Number(rating).toFixed(1)}/10 by viewers).`
+  ];
+  ratingText = ratingChoices[id % ratingChoices.length];
+
+  return `${introduction} ${explanation} ${ratingText}`.trim();
 }
 
 module.exports = {

@@ -131,9 +131,93 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
             </div>
 
             <h3 className="detail-section-heading" style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Overview</h3>
-            <p className="detail-overview" style={{ color: '#94a3b8', lineHeight: 1.7, maxWidth: '700px' }}>
+            <p className="detail-overview" style={{ color: '#94a3b8', lineHeight: 1.7, maxWidth: '700px', marginBottom: '24px' }}>
               {movie.overview || 'No overview available.'}
             </p>
+
+            {/* OTT Watch Providers Section */}
+            {(() => {
+              const watchProviders = movie["watch/providers"]?.results?.IN || movie["watch/providers"]?.results?.US;
+              const flatrate = watchProviders?.flatrate || [];
+              const rent = watchProviders?.rent || [];
+              return (flatrate.length > 0 || rent.length > 0) ? (
+                <div style={{ marginTop: '24px', backgroundColor: '#1E1E1E', padding: '16px 20px', borderRadius: '12px', border: '1px solid #2B2B2B', maxWidth: '700px' }}>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: '#FFF', margin: '0 0 12px 0', letterSpacing: '0.3px', textTransform: 'uppercase' }}>
+                    📺 Stream Availability (OTT Platforms)
+                  </h4>
+                  
+                  {flatrate.length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: rent.length > 0 ? '12px' : '0' }}>
+                      <span style={{ fontSize: '0.85rem', color: '#888', width: '90px', fontWeight: '600' }}>Subscription:</span>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {flatrate.map((provider) => (
+                          <div
+                            key={provider.provider_id}
+                            title={provider.provider_name}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              backgroundColor: '#2b2b2b',
+                              padding: '4px 10px',
+                              borderRadius: '8px',
+                              border: '1px solid #3b3b3b',
+                              gap: '6px',
+                              fontSize: '0.82rem',
+                            }}
+                          >
+                            {provider.logo_path && (
+                              <img
+                                src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
+                                alt={provider.provider_name}
+                                style={{ width: '20px', height: '20px', borderRadius: '4px' }}
+                              />
+                            )}
+                            <span style={{ fontWeight: '500', color: '#FFF' }}>{provider.provider_name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {rent.length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '0.85rem', color: '#888', width: '90px', fontWeight: '600' }}>Rent / Buy:</span>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {rent.slice(0, 4).map((provider) => (
+                          <div
+                            key={provider.provider_id}
+                            title={provider.provider_name}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              backgroundColor: '#2b2b2b',
+                              padding: '4px 10px',
+                              borderRadius: '8px',
+                              border: '1px solid #3b3b3b',
+                              gap: '6px',
+                              fontSize: '0.82rem',
+                            }}
+                          >
+                            {provider.logo_path && (
+                              <img
+                                src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
+                                alt={provider.provider_name}
+                                style={{ width: '18px', height: '18px', borderRadius: '4px' }}
+                              />
+                            )}
+                            <span style={{ fontWeight: '500', color: '#FFF' }}>{provider.provider_name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ marginTop: '24px', backgroundColor: '#1E1E1E', padding: '16px 20px', borderRadius: '12px', border: '1px solid #2B2B2B', maxWidth: '700px', fontSize: '0.82rem', color: '#888' }}>
+                  📺 Stream availability data is currently unavailable for this title.
+                </div>
+              );
+            })()}
           </div>
         </div>
 
