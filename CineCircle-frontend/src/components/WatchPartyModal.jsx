@@ -17,12 +17,80 @@ function WatchPartyModal({ isOpen, onClose, user }) {
 
   const navigate = useNavigate();
 
+  const [recentRooms, setRecentRooms] = useState([]);
+
+  // Load history from localStorage when modal is opened
   useEffect(() => {
     if (isOpen) {
       setCreateUsername(user ? user.username : '');
       setJoinUsername(user ? user.username : '');
+      
+      const key = user ? `cinecircle_recent_rooms_${user.id || user._id || 'global'}` : 'cinecircle_recent_rooms_guest';
+      try {
+        const saved = localStorage.getItem(key);
+        setRecentRooms(saved ? JSON.parse(saved) : []);
+      } catch (err) {
+        setRecentRooms([]);
+      }
     }
   }, [isOpen, user]);
+
+  const saveToHistory = (code, name) => {
+    const key = user ? `cinecircle_recent_rooms_${user.id || user._id || 'global'}` : 'cinecircle_recent_rooms_guest';
+    try {
+      const saved = localStorage.getItem(key);
+      let history = saved ? JSON.parse(saved) : [];
+      history = history.filter(r => r.code !== code);
+      history.unshift({ code, name, joinedAt: Date.now() });
+      localStorage.setItem(key, JSON.stringify(history.slice(0, 4)));
+    } catch (err) {
+      console.error('Failed to save to history:', err);
+    }
+  };
+
+  const handleQuickJoin = async (code, name) => {
+    setErrorMessage('');
+    const cleanUsername = (activeTab === 'create' ? createUsername : joinUsername).trim();
+    if (!cleanUsername) {
+      setErrorMessage('Please enter your name above first.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/groups/join', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: code.toUpperCase(),
+          username: cleanUsername,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        setErrorMessage(data.message || 'Unable to join group. Check the code and try again.');
+        return;
+      }
+
+      saveToHistory(code, name);
+      onClose();
+      navigate('/lobby', {
+        state: {
+          groupName: data.group.groupName,
+          groupCode: data.group.code,
+          currentUser: cleanUsername,
+          members: data.group.members || [],
+        },
+      });
+    } catch (err) {
+      console.error('Quick join error:', err);
+      setErrorMessage('Server connection error.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -60,6 +128,7 @@ function WatchPartyModal({ isOpen, onClose, user }) {
       const data = await response.json();
       console.log('Group created:', data);
 
+      saveToHistory(data.code, groupName.trim());
       onClose(); // Close the modal
       navigate('/lobby', {
         state: {
@@ -119,6 +188,7 @@ function WatchPartyModal({ isOpen, onClose, user }) {
         return;
       }
 
+      saveToHistory(data.group.code, data.group.groupName);
       onClose(); // Close the modal
       navigate('/lobby', {
         state: {
@@ -289,6 +359,53 @@ function WatchPartyModal({ isOpen, onClose, user }) {
               {loading ? 'Joining...' : 'Join Watch Party 🎟️'}
             </button>
           </form>
+        )}
+
+        {/* Recent Watch Parties Panel */}
+        {recentRooms.length > 0 && (
+          <div style={{ marginTop: '24px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '20px', textAlign: 'left' }}>
+            <h4 style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)', margin: '0 0 12px 0', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+              🕒 Rejoin Recent Parties
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {recentRooms.map((room) => (
+                <button
+                  key={room.code}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleQuickJoin(room.code, room.name)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    textAlign: 'left',
+                    transition: 'all 0.2s ease',
+                    width: '100%',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+                    e.currentTarget.style.borderColor = 'var(--primary-red)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                  }}
+                >
+                  <span style={{ fontWeight: '600' }}>🍿 {room.name}</span>
+                  <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px', color: '#ff4d4d', fontWeight: '800', letterSpacing: '0.5px' }}>
+                    {room.code}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>

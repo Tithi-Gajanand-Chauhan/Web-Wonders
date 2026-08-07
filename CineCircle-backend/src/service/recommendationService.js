@@ -396,7 +396,8 @@ const enrichedRecommendations = await Promise.all(
       releaseDate: matchedCandidate ? matchedCandidate.releaseDate : null,
       originCountry: matchedCandidate ? matchedCandidate.originCountry : null,
       genres: matchedCandidate ? matchedCandidate.genres : [],
-      badge: badge || "TOP MOVIE"
+      badge: badge || "TOP MOVIE",
+      match_percentage: calculateMovieMatchPercentage(matchedCandidate || rec, groupPreferences)
     };
   })
 );
@@ -765,7 +766,8 @@ return {
           genres: movie.genres,
           badge: (movie.genres && movie.genres.length > 0 && genreIdToName[movie.genres[0]]) 
             ? `TOP ${genreIdToName[movie.genres[0]].toUpperCase()}` 
-            : "TOP MOVIE"
+            : "TOP MOVIE",
+          match_percentage: calculateMovieMatchPercentage(movie, groupPreferences)
         };
       })
       .sort((a, b) => {
@@ -774,6 +776,23 @@ return {
         return dateB.localeCompare(dateA);
       })
   };
+}
+
+function calculateMovieMatchPercentage(movie, groupPreferences) {
+  const genreIds = [...new Set((groupPreferences || []).flatMap(u => (u.genres || []).map(g => genreMap[g]).filter(Boolean)))];
+  const movieGenres = movie.genres || [];
+  const matchingGenres = movieGenres.filter(id => genreIds.includes(id)).length;
+  
+  const hasLanguageMatch = (groupPreferences || []).some(u => {
+    const code = languageMap[u.language];
+    return code && (movie.original_language === code || movie.language === code || movie.originCountry?.includes(code.toUpperCase()));
+  });
+
+  const langBonus = hasLanguageMatch ? 15 : 0;
+  const genreBonus = genreIds.length > 0 ? Math.min(15, (matchingGenres / genreIds.length) * 15) : 10;
+  const ratingBonus = Math.min(9, (movie.rating || movie.vote_average || 7.0) * 1.0);
+
+  return Math.round(Math.min(99, 60 + langBonus + genreBonus + ratingBonus));
 }
 
 function generateMockAIReason(movie, groupPreferences) {

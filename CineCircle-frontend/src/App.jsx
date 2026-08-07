@@ -4,7 +4,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import SearchResults from './pages/SearchResults';
 import Browse from './pages/Browse';
-import MovieDetail from './pages/MovieDetail';
+import MovieDetail from './pages/Moviedetail';
 import TrailerModal from './components/TrailerModal';
 import WatchlistModal from './components/WatchlistModal';
 import WatchPartyModal from './components/WatchPartyModal';

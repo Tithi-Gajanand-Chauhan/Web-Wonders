@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getMovieDetails } from '../services/api';
 
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
@@ -8,6 +8,7 @@ const BACKDROP_BASE_URL = 'https://image.tmdb.org/t/p/original';
 function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +58,16 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
   const director = movie.credits?.crew?.find((p) => p.job === 'Director');
   const isSaved = isInWatchlist ? isInWatchlist(movie.id) : false;
 
+  // Look up custom match percentage if navigated from group watch recommendations
+  const groupRecs = location.state?.recommendations || [];
+  const matchedRecMovie = groupRecs.find(m => String(m.movieId) === String(id) || String(m.movieId) === String(movie.id));
+  const groupMatchPercentage = matchedRecMovie?.match_percentage;
+
+  // Fallback to dynamic TMDB rating-based match score calculation for home/browse details
+  const calculatedMatch = Math.round(Math.min(99, 70 + (movie.vote_average || 7.0) * 2.5 + (movie.id % 5)));
+  
+  const matchPercentage = groupMatchPercentage || calculatedMatch;
+
   return (
     <div className="detail-page" style={{ position: 'relative', minHeight: '100vh' }}>
       {movie.backdrop_path && (
@@ -98,7 +109,7 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
               </span>
               {movie.runtime > 0 && <span>{hours}h {minutes}m</span>}
               {director && <span>Dir. {director.name}</span>}
-              <span className="badge-match">{movie.match_percentage || 98}% Match</span>
+              <span className="badge-match">{matchPercentage}% Match</span>
             </div>
 
             <div className="detail-genres" style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
@@ -140,10 +151,26 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
               const watchProviders = movie["watch/providers"]?.results?.IN || movie["watch/providers"]?.results?.US;
               const flatrate = watchProviders?.flatrate || [];
               const rent = watchProviders?.rent || [];
+              
+              const getProviderLink = (provider) => {
+                const name = provider.provider_name || "";
+                const normName = name.toLowerCase().trim();
+                if (normName.includes("netflix")) return "https://www.netflix.com";
+                if (normName.includes("prime video") || normName.includes("amazon video")) return "https://www.primevideo.com";
+                if (normName.includes("hotstar")) return "https://www.hotstar.com";
+                if (normName.includes("jiocinema")) return "https://www.jiocinema.com";
+                if (normName.includes("zee5")) return "https://www.zee5.com";
+                if (normName.includes("sonyliv")) return "https://www.sonyliv.com";
+                if (normName.includes("apple tv")) return "https://tv.apple.com";
+                
+                // Fallback to a google search for streaming options of this movie on this provider
+                return `https://www.google.com/search?q=watch+${encodeURIComponent(movie.title)}+on+${encodeURIComponent(name)}`;
+              };
+
               return (flatrate.length > 0 || rent.length > 0) ? (
                 <div style={{ marginTop: '24px', backgroundColor: '#1E1E1E', padding: '16px 20px', borderRadius: '12px', border: '1px solid #2B2B2B', maxWidth: '700px' }}>
                   <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: '#FFF', margin: '0 0 12px 0', letterSpacing: '0.3px', textTransform: 'uppercase' }}>
-                    📺 Stream Availability (OTT Platforms)
+                    📺 Stream Availability (Click to Watch)
                   </h4>
                   
                   {flatrate.length > 0 && (
@@ -151,9 +178,12 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
                       <span style={{ fontSize: '0.85rem', color: '#888', width: '90px', fontWeight: '600' }}>Subscription:</span>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {flatrate.map((provider) => (
-                          <div
+                          <a
                             key={provider.provider_id}
-                            title={provider.provider_name}
+                            href={getProviderLink(provider)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Watch on ${provider.provider_name}`}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -163,6 +193,17 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
                               border: '1px solid #3b3b3b',
                               gap: '6px',
                               fontSize: '0.82rem',
+                              textDecoration: 'none',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#383838';
+                              e.currentTarget.style.borderColor = '#FFD700';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#2b2b2b';
+                              e.currentTarget.style.borderColor = '#3b3b3b';
                             }}
                           >
                             {provider.logo_path && (
@@ -173,7 +214,7 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
                               />
                             )}
                             <span style={{ fontWeight: '500', color: '#FFF' }}>{provider.provider_name}</span>
-                          </div>
+                          </a>
                         ))}
                       </div>
                     </div>
@@ -184,9 +225,12 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
                       <span style={{ fontSize: '0.85rem', color: '#888', width: '90px', fontWeight: '600' }}>Rent / Buy:</span>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {rent.slice(0, 4).map((provider) => (
-                          <div
+                          <a
                             key={provider.provider_id}
-                            title={provider.provider_name}
+                            href={getProviderLink(provider)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Rent on ${provider.provider_name}`}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -196,6 +240,17 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
                               border: '1px solid #3b3b3b',
                               gap: '6px',
                               fontSize: '0.82rem',
+                              textDecoration: 'none',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#383838';
+                              e.currentTarget.style.borderColor = '#FFD700';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#2b2b2b';
+                              e.currentTarget.style.borderColor = '#3b3b3b';
                             }}
                           >
                             {provider.logo_path && (
@@ -206,7 +261,7 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist }) {
                               />
                             )}
                             <span style={{ fontWeight: '500', color: '#FFF' }}>{provider.provider_name}</span>
-                          </div>
+                          </a>
                         ))}
                       </div>
                     </div>
