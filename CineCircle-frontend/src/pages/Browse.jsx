@@ -1,55 +1,111 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import FilterBar from '../components/FilterBar';
 import MovieCard from '../components/MovieCard';
-import { getPopularMovies, getGenres } from '../services/api';
+import { 
+  getPopularMovies, 
+  getRecentMovies, 
+  getSciFiMovies, 
+  getAnimationMovies, 
+  getGenres,
+  discoverMovies
+} from '../services/api';
 
 function Browse({ onPlayTrailer, onToggleWatchlist, isInWatchlist, safeSearch = true }) {
+  const [defaultMovies, setDefaultMovies] = useState([]);
   const [movies, setMovies] = useState([]);
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filtering, setFiltering] = useState(false);
 
   const [genreFilter, setGenreFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [ratingFilter, setRatingFilter] = useState('');
 
+  // 1. Initial Load of Rich Default Catalog and Genres
   useEffect(() => {
-    async function fetchData() {
+    async function fetchInitialData() {
       try {
         setLoading(true);
-        const [movieData, genreData] = await Promise.all([
-          getPopularMovies(),
+        const [pop1, pop2, pop3, recent, scifi, anim, genreData] = await Promise.all([
+          getPopularMovies(1),
+          getPopularMovies(2),
+          getPopularMovies(3),
+          getRecentMovies(1),
+          getSciFiMovies(1),
+          getAnimationMovies(1),
           getGenres(),
         ]);
-        setMovies(movieData.results || []);
+
+        const allMovies = [
+          ...(pop1?.results || []),
+          ...(pop2?.results || []),
+          ...(pop3?.results || []),
+          ...(recent?.results || []),
+          ...(scifi?.results || []),
+          ...(anim?.results || [])
+        ];
+
+        // Deduplicate movies by ID
+        const uniqueMoviesMap = {};
+        allMovies.forEach(m => {
+          if (m && m.id) {
+            uniqueMoviesMap[m.id] = m;
+          }
+        });
+        const uniqueMovies = Object.values(uniqueMoviesMap);
+
+        setDefaultMovies(uniqueMovies);
+        setMovies(uniqueMovies);
         setGenres(genreData.genres || []);
       } catch (err) {
-        console.error('Failed to load browse data:', err);
+        console.error('Failed to load initial catalog:', err);
       } finally {
         setLoading(false);
       }
     }
-    fetchData();
+    fetchInitialData();
   }, []);
 
-  const filteredMovies = useMemo(() => {
-    return movies.filter((movie) => {
-      // Safe Search filter
-      if (safeSearch) {
-        if (movie.adult === true) return false;
-        if (movie.age_rating === '18+' || movie.age_rating === 'NC-17') return false;
+  // 2. Fetch from Backend Discovery API when filters change
+  useEffect(() => {
+    async function filterCatalog() {
+      // If no filters are active, revert to default catalog
+      if (!genreFilter && !yearFilter && !ratingFilter) {
+        setMovies(defaultMovies);
+        return;
       }
-      if (genreFilter && !movie.genre_ids?.includes(Number(genreFilter))) return false;
-      if (yearFilter && movie.release_date?.split('-')[0] !== yearFilter) return false;
-      if (ratingFilter && movie.vote_average < Number(ratingFilter)) return false;
-      return true;
-    });
-  }, [movies, safeSearch, genreFilter, yearFilter, ratingFilter]);
+
+      try {
+        setFiltering(true);
+        const data = await discoverMovies(genreFilter, yearFilter, ratingFilter);
+        setMovies(data.results || []);
+      } catch (err) {
+        console.error('Failed to discover filtered movies:', err);
+      } finally {
+        setFiltering(false);
+      }
+    }
+
+    if (defaultMovies.length > 0 || genreFilter || yearFilter || ratingFilter) {
+      filterCatalog();
+    }
+  }, [genreFilter, yearFilter, ratingFilter, defaultMovies]);
+
+  // Keep client-side Safe Search filter for the active list
+  const filteredMovies = movies.filter((movie) => {
+    if (safeSearch) {
+      if (movie.adult === true) return false;
+      if (movie.age_rating === '18+' || movie.age_rating === 'NC-17') return false;
+    }
+    return true;
+  });
 
   if (loading) return <div className="status-message">Loading movie library...</div>;
 
   return (
     <div className="home-content-container" style={{ paddingTop: '30px' }}>
       <h1 className="row-title" style={{ fontSize: '1.8rem' }}>Browse Complete Catalog</h1>
+      
       <FilterBar
         genres={genres}
         genreFilter={genreFilter}
@@ -59,7 +115,10 @@ function Browse({ onPlayTrailer, onToggleWatchlist, isInWatchlist, safeSearch = 
         ratingFilter={ratingFilter}
         setRatingFilter={setRatingFilter}
       />
-      {filteredMovies.length === 0 ? (
+
+      {filtering ? (
+        <div className="status-message">Filtering movies...</div>
+      ) : filteredMovies.length === 0 ? (
         <div className="status-message">No movies match your selected filters.</div>
       ) : (
         <div className="search-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>

@@ -7,6 +7,17 @@ const api = axios.create({
   timeout: 3000,
 });
 
+// Request interceptor to automatically attach authorization headers
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('cinecircle_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
+
 // Curated high quality movie dataset with real high-res posters, backdrops, YouTube trailers & details
 export const MOCK_GENRES = [
   { id: 28, name: 'Action' },
@@ -499,6 +510,131 @@ export const getMovieDetails = async (id) => {
       crew: [{ id: 99, job: 'Director', name: 'Christopher Nolan' }]
     }
   };
+};
+
+// --- Reviews & Ratings API ---
+export const fetchReviews = async (movieId) => {
+  try {
+    const response = await api.get(`/reviews/${movieId}`);
+    return response.data;
+  } catch (e) {
+    console.error('fetchReviews error:', e);
+    return { reviews: [], averageRating: 0, totalReviews: 0 };
+  }
+};
+
+export const submitReview = async (movieId, rating, reviewText) => {
+  const response = await api.post(`/reviews/${movieId}`, { rating, reviewText });
+  return response.data;
+};
+
+export const deleteReview = async (movieId) => {
+  const response = await api.delete(`/reviews/${movieId}`);
+  return response.data;
+};
+
+// --- Likes API ---
+export const fetchLikes = async (movieId) => {
+  try {
+    const response = await api.get(`/likes/${movieId}`);
+    return response.data;
+  } catch (e) {
+    console.error('fetchLikes error:', e);
+    return { likesCount: 0, userLiked: false };
+  }
+};
+
+export const toggleLike = async (movieId) => {
+  const response = await api.post(`/likes/${movieId}/toggle`);
+  return response.data;
+};
+
+// --- Custom Lists API ---
+export const fetchCustomLists = async () => {
+  try {
+    const response = await api.get('/lists');
+    return response.data;
+  } catch (e) {
+    console.error('fetchCustomLists error:', e);
+    return [];
+  }
+};
+
+export const createCustomList = async (name, description) => {
+  const response = await api.post('/lists', { name, description });
+  return response.data;
+};
+
+export const deleteCustomList = async (listId) => {
+  const response = await api.delete(`/lists/${listId}`);
+  return response.data;
+};
+
+export const addMovieToCustomList = async (listId, movie) => {
+  const response = await api.post(`/lists/${listId}/movies`, {
+    id: movie.id,
+    title: movie.title,
+    poster_path: movie.poster_path,
+    backdrop_path: movie.backdrop_path,
+    vote_average: movie.vote_average
+  });
+  return response.data;
+};
+
+export const removeMovieFromCustomList = async (listId, movieId) => {
+  const response = await api.delete(`/lists/${listId}/movies/${movieId}`);
+  return response.data;
+};
+
+// --- Watched Status API ---
+export const fetchWatchedStatus = async (movieId) => {
+  try {
+    const response = await api.get(`/watched/${movieId}`);
+    return response.data;
+  } catch (e) {
+    console.error('fetchWatchedStatus error:', e);
+    return { userWatched: false };
+  }
+};
+
+export const toggleWatchedStatus = async (movieId) => {
+  const response = await api.post(`/watched/${movieId}/toggle`);
+  return response.data;
+};
+
+// --- Reviews Stats API ---
+export const fetchReviewStats = async (movieId) => {
+  try {
+    const response = await api.get(`/reviews/${movieId}/stats`);
+    return response.data;
+  } catch (e) {
+    console.error('fetchReviewStats error:', e);
+    return { distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, totalReviews: 0, averageRating: 0 };
+  }
+};
+
+export const discoverMovies = async (genre = '', year = '', rating = '', page = 1) => {
+  try {
+    const response = await api.get('/movies/discover', {
+      params: { genre, year, rating, page }
+    });
+    if (response.data && response.data.results) return response.data;
+  } catch (e) {
+    console.error('discoverMovies error:', e);
+  }
+  
+  // Fallback filtering if backend is offline
+  let filtered = [...CURATED_MOVIES];
+  if (genre) {
+    filtered = filtered.filter(m => m.genre_ids?.includes(Number(genre)));
+  }
+  if (year) {
+    filtered = filtered.filter(m => m.release_date?.split('-')[0] === year);
+  }
+  if (rating) {
+    filtered = filtered.filter(m => m.vote_average >= Number(rating));
+  }
+  return { results: filtered };
 };
 
 export default api;
