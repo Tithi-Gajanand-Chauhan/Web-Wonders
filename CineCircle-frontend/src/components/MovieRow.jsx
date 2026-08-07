@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MovieCard from './MovieCard';
 
 function MovieRow({
@@ -8,8 +9,10 @@ function MovieRow({
   onPlayTrailer,
   onToggleWatchlist,
   isInWatchlist,
+  section,
 }) {
   const rowRef = useRef(null);
+  const navigate = useNavigate();
 
   const handleScroll = (direction) => {
     if (rowRef.current) {
@@ -29,7 +32,14 @@ function MovieRow({
       <div className="row-header">
         <div className="row-title-box">
           <h2 className="row-title">{title}</h2>
-          <button className="explore-all-btn">Explore All ›</button>
+          {section && (
+            <button 
+              className="explore-all-btn"
+              onClick={() => navigate(`/explore/${section}`)}
+            >
+              Explore All ›
+            </button>
+          )}
         </div>
         <div className="row-header-dashes">
           <span className="dash active" />

@@ -48,6 +48,21 @@ function WatchPartyModal({ isOpen, onClose, user }) {
     }
   };
 
+  const handleDeleteRoom = (code) => {
+    const key = user ? `cinecircle_recent_rooms_${user.id || user._id || 'global'}` : 'cinecircle_recent_rooms_guest';
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        let history = JSON.parse(saved);
+        history = history.filter(r => r.code !== code);
+        localStorage.setItem(key, JSON.stringify(history));
+        setRecentRooms(history);
+      }
+    } catch (err) {
+      console.error('Failed to delete history item:', err);
+    }
+  };
+
   const handleQuickJoin = async (code, name) => {
     setErrorMessage('');
     const cleanUsername = (activeTab === 'create' ? createUsername : joinUsername).trim();
@@ -369,40 +384,72 @@ function WatchPartyModal({ isOpen, onClose, user }) {
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {recentRooms.map((room) => (
-                <button
-                  key={room.code}
-                  type="button"
-                  disabled={loading}
-                  onClick={() => handleQuickJoin(room.code, room.name)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    backgroundColor: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    padding: '10px 14px',
-                    borderRadius: '8px',
-                    color: '#fff',
-                    cursor: 'pointer',
-                    fontSize: '0.85rem',
-                    textAlign: 'left',
-                    transition: 'all 0.2s ease',
-                    width: '100%',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-                    e.currentTarget.style.borderColor = 'var(--primary-red)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
-                  }}
-                >
-                  <span style={{ fontWeight: '600' }}>🍿 {room.name}</span>
-                  <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px', color: '#ff4d4d', fontWeight: '800', letterSpacing: '0.5px' }}>
-                    {room.code}
-                  </span>
-                </button>
+                <div key={room.code} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => handleQuickJoin(room.code, room.name)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      backgroundColor: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      textAlign: 'left',
+                      transition: 'all 0.2s ease',
+                      flex: 1,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+                      e.currentTarget.style.borderColor = 'var(--primary-red)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)';
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                    }}
+                  >
+                    <span style={{ fontWeight: '600' }}>🍿 {room.name}</span>
+                    <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px', color: '#ff4d4d', fontWeight: '800', letterSpacing: '0.5px' }}>
+                      {room.code}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    title="Remove from history"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteRoom(room.code);
+                    }}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#888',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      padding: '8px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '50%',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = '#ff4d4d';
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 77, 77, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = '#888';
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
               ))}
             </div>
           </div>

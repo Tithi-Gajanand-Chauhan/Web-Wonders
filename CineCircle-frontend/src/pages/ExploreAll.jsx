@@ -17,6 +17,8 @@ import {
   getRomanceMovies,
   getActionMovies,
   getAwardMovies,
+  getGujaratiMovies,
+  getMarathiMovies,
 } from '../services/api';
 
 /** Maps section key → { title, fetcher } */
@@ -34,6 +36,8 @@ const SECTION_CONFIG = {
   chinese:   { title: '🏮 Chinese Cinema & Blockbusters',     fetcher: getChineseMovies },
   japanese:  { title: '🌸 Japanese & Anime Films',            fetcher: getJapaneseMovies },
   indian:    { title: '🎊 Indian Cinema & Blockbusters',      fetcher: getIndianMovies },
+  gujarati:  { title: '🏮 Gujarati Cinema & Hits',            fetcher: getGujaratiMovies },
+  marathi:   { title: '🎭 Marathi Cinema & Hits',             fetcher: getMarathiMovies },
   spanish:   { title: '🌮 Spanish & Latino Cinema',           fetcher: getSpanishMovies },
   animation: { title: '🎨 Cartoons & Animated Hits',          fetcher: getAnimationMovies },
   filtered:  { title: '🔎 Filtered Results',                  fetcher: null },

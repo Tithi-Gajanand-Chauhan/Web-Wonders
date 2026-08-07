@@ -1,9 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  getMovieTrailerKey, 
-  getTrailerIframeUrl, 
-  fetchMovieTrailer,
   fetchWatchedStatus,
   toggleWatchedStatus,
   fetchLikes,
@@ -21,7 +18,6 @@ const HOVER_DELAY_MS = 350;
 function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isSaved }) {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
-  const [trailerSrc, setTrailerSrc] = useState(null);
   const hoverTimer = useRef(null);
   const isMouseInsideRef = useRef(false);
 
@@ -61,24 +57,9 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
   const handleMouseEnter = () => {
     isMouseInsideRef.current = true;
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
-
-    hoverTimer.current = setTimeout(async () => {
-      if (!isMouseInsideRef.current) return;
-      setIsHovered(true);
-
-      const knownKey = getMovieTrailerKey(movie);
-      if (knownKey) {
-        if (isMouseInsideRef.current) {
-          setTrailerSrc(getTrailerIframeUrl(movie, { autoplay: 1, mute: 1, loop: 1 }));
-        }
-        return;
-      }
-
-      const fetchedKey = await fetchMovieTrailer(movie.id);
-      if (fetchedKey && isMouseInsideRef.current) {
-        setTrailerSrc(
-          getTrailerIframeUrl({ ...movie, trailer_key: fetchedKey }, { autoplay: 1, mute: 1, loop: 1 })
-        );
+    hoverTimer.current = setTimeout(() => {
+      if (isMouseInsideRef.current) {
+        setIsHovered(true);
       }
     }, HOVER_DELAY_MS);
   };
@@ -90,7 +71,6 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
       hoverTimer.current = null;
     }
     setIsHovered(false);
-    setTrailerSrc(null);
     if (!isMenuOpen) {
       setIsMenuOpen(false);
     }
@@ -191,8 +171,6 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
     return stars;
   };
 
-  const isPlayingVideo = Boolean(trailerSrc);
-
   return (
     <div
       className={`movie-card-container ${isTop10 ? 'top10-container' : ''} ${isHovered || isMenuOpen ? 'hover-active' : ''}`}
@@ -210,22 +188,24 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
           <img
             src={posterUrl}
             alt={movie.title}
-            className={`movie-poster-img ${isPlayingVideo ? 'fade-out' : ''}`}
+            className="movie-poster-img"
           />
 
           {movie.badge && <span className="poster-badge-tag">{movie.badge}</span>}
 
-          {isHovered && trailerSrc && (
-            <div className="trailer-preview-wrapper">
-              <iframe
-                src={trailerSrc}
-                title={`${movie.title} Preview`}
-                className="trailer-preview-iframe"
-                allow="autoplay; encrypted-media"
-                frameBorder="0"
-              />
+          <div className="poster-play-overlay">
+            <div 
+              className="poster-play-btn-circle" 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                onPlayTrailer(movie); 
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
             </div>
-          )}
+          </div>
 
           {/* letterboxd style action pill overlay */}
           {(isHovered || isMenuOpen) && (
@@ -301,7 +281,7 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
                       {customLists.map(list => {
                         const inList = list.movies.some(m => String(m.id) === String(movie.id));
                         return (
-                          <label key={list._id} className="submenu-list-label">
+                           <label key={list._id} className="submenu-list-label">
                             <input 
                               type="checkbox" 
                               checked={inList}
