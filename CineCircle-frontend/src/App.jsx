@@ -144,7 +144,7 @@ function App() {
       )}
 
       <Routes>
-        <Route path="/" element={<IntroPage />} />
+        <Route path="/" element={<IntroPage onOpenAuth={() => setIsAuthOpen(true)} user={user} />} />
         <Route
           path="/home"
           element={

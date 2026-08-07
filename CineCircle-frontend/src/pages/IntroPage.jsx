@@ -5,12 +5,19 @@ import './IntroPage.css';
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w342';
 
-export default function IntroPage() {
+export default function IntroPage({ onOpenAuth, user }) {
   const navigate = useNavigate();
   const [posters, setPosters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [entered, setEntered] = useState(false);
   const containerRef = useRef(null);
+
+  // Auto-skip to /home if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/home');
+    }
+  }, [user, navigate]);
 
   // Fetch a diverse set of posters
   useEffect(() => {
@@ -72,6 +79,15 @@ export default function IntroPage() {
       className={`intro-page ${entered ? 'intro-exit' : ''}`}
       id="intro-page"
     >
+      {/* Floating Action Header */}
+      {!user && (
+        <div className="intro-top-bar">
+          <button className="intro-signin-btn" onClick={onOpenAuth}>
+            Sign In
+          </button>
+        </div>
+      )}
+
       {/* 3D Film Strip Ring Background */}
       {!loading && posters.length > 0 && (
         <div className="film-ring-container" aria-hidden="true">
