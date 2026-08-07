@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import SearchResults from './pages/SearchResults';
@@ -14,6 +14,7 @@ import GroupLobby from './pages/GroupLobby';
 import Preferences from './pages/Preferences';
 import Recommendation from './pages/Recommendation';
 import AuthModal from './components/AuthModal';
+import IntroPage from './pages/IntroPage';
 import './App.css';
 
 function App() {
@@ -124,22 +125,28 @@ function App() {
     return watchlist.some((m) => m.id === id);
   };
 
+  const location = useLocation();
+  const isIntroPage = location.pathname === '/';
+
   return (
     <div className="app-container">
-      <Navbar
-        watchlistCount={watchlist.length}
-        onOpenWatchlist={() => setIsWatchlistOpen(true)}
-        onOpenWatchParty={() => setIsWatchPartyOpen(true)}
-        safeSearch={safeSearch}
-        onToggleSafeSearch={() => setSafeSearch((prev) => !prev)}
-        user={user}
-        onOpenAuth={() => setIsAuthOpen(true)}
-        onLogout={handleLogout}
-      />
+      {!isIntroPage && (
+        <Navbar
+          watchlistCount={watchlist.length}
+          onOpenWatchlist={() => setIsWatchlistOpen(true)}
+          onOpenWatchParty={() => setIsWatchPartyOpen(true)}
+          safeSearch={safeSearch}
+          onToggleSafeSearch={() => setSafeSearch((prev) => !prev)}
+          user={user}
+          onOpenAuth={() => setIsAuthOpen(true)}
+          onLogout={handleLogout}
+        />
+      )}
 
       <Routes>
+        <Route path="/" element={<IntroPage />} />
         <Route
-          path="/"
+          path="/home"
           element={
             <Home
               onPlayTrailer={(movie) => setActiveTrailer(movie)}
@@ -218,16 +225,18 @@ function App() {
         onAuthSuccess={handleAuthSuccess}
       />
 
-      <footer className="cinecircle-footer">
-        <div className="footer-content">
-          <p>© 2026 CINECIRCLE • Premium Movie Discovery & Streaming Platform</p>
-          <div className="footer-links">
-            <span>Privacy</span>
-            <span>Terms</span>
-            <span>Help Center</span>
+      {!isIntroPage && (
+        <footer className="cinecircle-footer">
+          <div className="footer-content">
+            <p>© 2026 CINECIRCLE • Premium Movie Discovery & Streaming Platform</p>
+            <div className="footer-links">
+              <span>Privacy</span>
+              <span>Terms</span>
+              <span>Help Center</span>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }

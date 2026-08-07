@@ -1,5 +1,5 @@
 /* ==========================================================================
-   INTRO PAGE — DRIFT WALL CINEMATIC LANDING
+   INTRO PAGE — 3D FILM STRIP RING SYSTEM
    ========================================================================== */
 
 .intro-page {
@@ -7,100 +7,103 @@
   inset: 0;
   z-index: 9999;
   overflow: hidden;
-  background: #07080c;
+  background: #030406; /* Richer pitch black background */
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.8s cubic-bezier(0.4, 0, 0, 1),
-              transform 0.8s cubic-bezier(0.4, 0, 0, 1);
+  perspective: 1200px;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Exit transitions for the cinematic zoom portal */
 .intro-page.intro-exit {
   opacity: 0;
-  transform: scale(1.08);
   pointer-events: none;
 }
 
-/* ---- Drift Wall ---- */
-.drift-wall {
-  position: absolute;
-  inset: -60px;
-  display: flex;
-  gap: 10px;
-  padding: 0 6px;
-  perspective: 800px;
+.intro-page.intro-exit .film-ring {
+  transform: translateZ(900px) rotateY(180deg);
+  opacity: 0;
+  filter: blur(15px);
+  transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.7s ease-out,
+              filter 0.8s ease-out;
 }
 
-.drift-column {
-  flex: 1;
+.intro-page.intro-exit .intro-center-content {
+  transform: translateZ(600px) scale(3);
+  opacity: 0;
+  filter: blur(25px);
+  transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.7s ease-out,
+              filter 0.9s ease-out;
+}
+
+/* ---- 3D Film Ring Orbit ---- */
+.film-ring-container {
+  position: absolute;
+  inset: 0;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  perspective: 1200px;
+  overflow: hidden;
+  z-index: 5;
   will-change: transform;
 }
 
-.drift-column.drift-up {
-  animation: driftUp linear infinite;
-}
-
-.drift-column.drift-down {
-  animation: driftDown linear infinite;
-}
-
-@keyframes driftUp {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-33.333%);
-  }
-}
-
-@keyframes driftDown {
-  0% {
-    transform: translateY(-33.333%);
-  }
-  100% {
-    transform: translateY(0);
-  }
-}
-
-.drift-poster-card {
+.film-ring {
   position: relative;
-  border-radius: 10px;
+  width: 220px;
+  height: 330px;
+  transform-style: preserve-3d;
+  animation: spinRing 40s linear infinite;
+  will-change: transform;
+}
+
+@keyframes spinRing {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+.film-ring-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 220px;
+  height: 330px;
+  border-radius: 12px;
   overflow: hidden;
-  flex-shrink: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.5s ease;
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.9), 
+    0 0 50px rgba(229, 9, 20, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Orbit position calculated in 3D: rotate then push outward by radius */
+  transform: rotateY(calc(var(--index) * (360deg / var(--total)))) translateZ(520px);
+  backface-visibility: visible;
+  transition: transform 0.5s ease, filter 0.5s ease;
 }
 
-.drift-poster-card:hover {
-  transform: scale(1.08) rotateY(2deg);
-  box-shadow: 0 8px 40px rgba(229, 9, 20, 0.25),
-              0 0 60px rgba(229, 9, 20, 0.08);
-  z-index: 5;
-}
-
-.drift-poster-card img {
-  display: block;
+.film-ring-card img {
   width: 100%;
-  height: auto;
+  height: 100%;
   object-fit: cover;
-  border-radius: 10px;
   pointer-events: none;
 }
 
-.drift-poster-shine {
+.film-ring-shine {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.15) 0%,
     transparent 50%,
-    rgba(255, 255, 255, 0.02) 100%
+    rgba(0, 0, 0, 0.3) 100%
   );
-  border-radius: 10px;
   pointer-events: none;
 }
 
@@ -109,10 +112,10 @@
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    ellipse 80% 70% at 50% 50%,
-    rgba(7, 8, 12, 0.75) 0%,
-    rgba(7, 8, 12, 0.92) 60%,
-    rgba(7, 8, 12, 0.98) 100%
+    circle at center,
+    rgba(3, 4, 6, 0.7) 0%,
+    rgba(3, 4, 6, 0.9) 65%,
+    rgba(3, 4, 6, 0.98) 100%
   );
   pointer-events: none;
   z-index: 10;
@@ -121,7 +124,7 @@
 .intro-vignette {
   position: absolute;
   inset: 0;
-  box-shadow: inset 0 0 180px 80px rgba(7, 8, 12, 0.95);
+  box-shadow: inset 0 0 200px 100px rgba(3, 4, 6, 0.96);
   pointer-events: none;
   z-index: 11;
 }
@@ -137,13 +140,14 @@
   gap: 28px;
   max-width: 640px;
   padding: 40px 24px;
-  animation: contentFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+  animation: contentFadeIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+  will-change: transform, opacity;
 }
 
 @keyframes contentFadeIn {
   from {
     opacity: 0;
-    transform: translateY(30px) scale(0.95);
+    transform: translateY(40px) scale(0.95);
   }
   to {
     opacity: 1;
@@ -161,10 +165,10 @@
 
 @keyframes logoGlow {
   0% {
-    filter: drop-shadow(0 0 12px rgba(229, 9, 20, 0.15));
+    filter: drop-shadow(0 0 15px rgba(229, 9, 20, 0.25));
   }
   100% {
-    filter: drop-shadow(0 0 40px rgba(229, 9, 20, 0.35));
+    filter: drop-shadow(0 0 45px rgba(229, 9, 20, 0.55));
   }
 }
 
@@ -175,11 +179,11 @@
   width: 56px;
   height: 56px;
   background: linear-gradient(135deg, #e50914 0%, #b20710 100%);
-  border-radius: 16px;
-  font-size: 1.6rem;
+  border-radius: 50%; /* Circle theme branding */
+  font-size: 1.5rem;
   color: #fff;
-  box-shadow: 0 8px 32px rgba(229, 9, 20, 0.4);
-  letter-spacing: -2px;
+  box-shadow: 0 0 25px rgba(229, 9, 20, 0.6);
+  text-indent: 4px; /* Align the play triangle in the circle center */
 }
 
 .intro-logo-text {
@@ -248,8 +252,8 @@
   align-items: center;
   gap: 28px;
   padding: 16px 32px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 16px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -372,7 +376,7 @@
   align-items: center;
   justify-content: center;
   z-index: 30;
-  background: #07080c;
+  background: #030406;
 }
 
 .intro-spinner {
@@ -390,10 +394,28 @@
   }
 }
 
-/* ---- Responsive ---- */
+/* ---- Responsive & Orbit Scaling ---- */
+@media (max-width: 1200px) {
+  .film-ring-card {
+    width: 170px;
+    height: 255px;
+    transform: rotateY(calc(var(--index) * (360deg / var(--total)))) translateZ(430px);
+  }
+  .film-ring {
+    width: 170px;
+    height: 255px;
+  }
+}
+
 @media (max-width: 768px) {
-  .drift-wall {
-    gap: 6px;
+  .film-ring-card {
+    width: 120px;
+    height: 180px;
+    transform: rotateY(calc(var(--index) * (360deg / var(--total)))) translateZ(300px);
+  }
+  .film-ring {
+    width: 120px;
+    height: 180px;
   }
 
   .intro-logo-text {
@@ -405,7 +427,6 @@
     width: 44px;
     height: 44px;
     font-size: 1.2rem;
-    border-radius: 12px;
   }
 
   .intro-tagline {
@@ -437,6 +458,16 @@
 }
 
 @media (max-width: 480px) {
+  .film-ring-card {
+    width: 90px;
+    height: 135px;
+    transform: rotateY(calc(var(--index) * (360deg / var(--total)))) translateZ(220px);
+  }
+  .film-ring {
+    width: 90px;
+    height: 135px;
+  }
+
   .intro-logo-text {
     font-size: 2rem;
   }
@@ -448,7 +479,7 @@
   .intro-logo-icon {
     width: 38px;
     height: 38px;
-    font-size: 1rem;
+    font-size: 1.0rem;
   }
 
   .intro-stats-row {

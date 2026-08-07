@@ -5,17 +5,6 @@ import './IntroPage.css';
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w342';
 
-// Generates staggered drift columns
-function generateDriftColumns(posters, columnCount) {
-  const columns = Array.from({ length: columnCount }, () => []);
-  // Distribute posters round-robin across columns
-  posters.forEach((p, i) => {
-    columns[i % columnCount].push(p);
-  });
-  // Duplicate each column's content so the scroll loops seamlessly
-  return columns.map((col) => [...col, ...col, ...col]);
-}
-
 export default function IntroPage() {
   const navigate = useNavigate();
   const [posters, setPosters] = useState([]);
@@ -60,7 +49,7 @@ export default function IntroPage() {
         }
 
         if (!cancelled) {
-          setPosters(unique.slice(0, 48)); // Up to 48 posters
+          setPosters(unique.slice(0, 16)); // Use 16 posters for the 3D circle ring
           setLoading(false);
         }
       } catch (err) {
@@ -77,40 +66,34 @@ export default function IntroPage() {
     setTimeout(() => navigate('/home'), 900);
   }, [navigate]);
 
-  const columnCount = 8;
-  const driftColumns = posters.length > 0 ? generateDriftColumns(posters, columnCount) : [];
-
   return (
     <div
       ref={containerRef}
       className={`intro-page ${entered ? 'intro-exit' : ''}`}
       id="intro-page"
     >
-      {/* Drift Wall Background */}
-      <div className="drift-wall" aria-hidden="true">
-        {driftColumns.map((col, colIdx) => (
-          <div
-            className={`drift-column ${colIdx % 2 === 0 ? 'drift-up' : 'drift-down'}`}
-            key={colIdx}
-            style={{
-              animationDuration: `${35 + colIdx * 5}s`,
-              animationDelay: `${-colIdx * 2.5}s`,
-            }}
-          >
-            {col.map((movie, i) => (
-              <div className="drift-poster-card" key={`${movie.id}-${i}`}>
+      {/* 3D Film Strip Ring Background */}
+      {!loading && posters.length > 0 && (
+        <div className="film-ring-container" aria-hidden="true">
+          <div className="film-ring" style={{ '--total': posters.length }}>
+            {posters.map((movie, index) => (
+              <div
+                className="film-ring-card"
+                key={`${movie.id}-${index}`}
+                style={{ '--index': index }}
+              >
                 <img
                   src={`${TMDB_IMG}${movie.poster_path}`}
                   alt={movie.title || movie.name || ''}
                   loading="lazy"
                   draggable="false"
                 />
-                <div className="drift-poster-shine" />
+                <div className="film-ring-shine" />
               </div>
             ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* Dark overlay + vignette */}
       <div className="intro-overlay" />

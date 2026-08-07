@@ -58,7 +58,7 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
   return (
     <header className="navbar-container">
       <div className="navbar-left">
-        <div className="navbar-brand" onClick={() => navigate('/')}>
+        <div className="navbar-brand" onClick={() => navigate('/home')}>
           <span className="brand-logo-text">
             <span style={{ color: 'var(--primary-red)' }}>CINE</span>CIRCLE
             <span className="brand-badge">CINEMA</span>
@@ -67,8 +67,8 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
 
         <nav className="navbar-links">
           <button
-            className={`nav-link-pill ${location.pathname === '/' ? 'active' : ''}`}
-            onClick={() => navigate('/')}
+            className={`nav-link-pill ${location.pathname === '/home' || location.pathname === '/' ? 'active' : ''}`}
+            onClick={() => navigate('/home')}
           >
             Home
           </button>
