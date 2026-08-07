@@ -189,6 +189,7 @@ function App() {
               onPlayTrailer={(movie) => setActiveTrailer(movie)}
               onToggleWatchlist={toggleWatchlist}
               isInWatchlist={isInWatchlist}
+              user={user}
             />
           }
         />
@@ -225,6 +226,7 @@ function App() {
         watchlist={watchlist}
         onRemoveFromWatchlist={removeFromWatchlist}
         onPlayTrailer={(movie) => setActiveTrailer(movie)}
+        user={user}
       />
 
       {/* Watch Party Room Creation Modal */}

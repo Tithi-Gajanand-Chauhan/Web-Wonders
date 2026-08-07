@@ -14,6 +14,34 @@ router.get('/popular', async (req, res) => {
   }
 });
 
+// GET /api/movies/discover?genre=...&year=...&rating=...&page=...
+router.get('/discover', async (req, res) => {
+  try {
+    const { genre, year, rating, page } = req.query;
+    const params = {
+      page: parseInt(page) || 1,
+      sort_by: 'popularity.desc',
+      include_adult: false,
+    };
+    
+    if (genre) {
+      params.with_genres = genre;
+    }
+    if (year) {
+      params.primary_release_year = parseInt(year);
+    }
+    if (rating) {
+      params['vote_average.gte'] = parseFloat(rating);
+    }
+    
+    const data = await tmdbService.discoverMovies(params);
+    res.json(data);
+  } catch (err) {
+    console.error('Error discovering movies:', err.message);
+    res.status(500).json({ error: 'Failed to discover movies' });
+  }
+});
+
 // GET /api/movies/search?query=...
 router.get('/search', async (req, res) => {
   try {

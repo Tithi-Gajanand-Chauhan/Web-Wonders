@@ -8,11 +8,16 @@ const mongoose = require('mongoose');
 const moviesRouter = require('./routes/movies');
 const groupsRouter = require('./routes/groups');
 const authRouter = require('./routes/auth');
+const reviewsRouter = require('./routes/reviews');
+const likesRouter = require('./routes/likes');
+const listsRouter = require('./routes/lists');
+const watchedRouter = require('./routes/watched');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
+mongoose.set('bufferCommands', false);
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/cinecircle';
 mongoose.connect(MONGO_URI)
   .then(() => console.log('Successfully connected to MongoDB'))
@@ -24,6 +29,10 @@ app.use(express.json());
 app.use('/api/movies', moviesRouter);
 app.use('/api/groups', groupsRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/reviews', reviewsRouter);
+app.use('/api/likes', likesRouter);
+app.use('/api/lists', listsRouter);
+app.use('/api/watched', watchedRouter);
 
 app.get('/', (req, res) => {
   res.json({ message: 'CineCircle API is running' });

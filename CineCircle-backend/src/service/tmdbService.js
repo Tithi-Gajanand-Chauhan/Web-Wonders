@@ -289,6 +289,53 @@ function setCache(key, data) {
   cache.set(key, { data, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
+async function resolveBestTitle(movie) {
+  if (!movie) return '';
+  
+  const originalTitle = movie.original_title || movie.title;
+  
+  // If the original title is already in Latin script (allowing diacritics like ā, é), it's fine as is
+  const latinRegex = /^[\p{Script=Latin}\p{Script=Common}\p{Script=Inherited}]+$/u;
+  if (originalTitle && latinRegex.test(originalTitle)) {
+    return originalTitle;
+  }
+  
+  // Otherwise, try to find a Latin script alternative title from target regions (IN, US, GB)
+  try {
+    const altResponse = await fetchFromTMDB(`/movie/${movie.id}/alternative_titles`, {});
+    if (altResponse && altResponse.titles) {
+      const targetCountries = ['IN', 'US', 'GB'];
+      const latinTitles = altResponse.titles.filter(t => 
+        t.title && 
+        latinRegex.test(t.title) && 
+        targetCountries.includes(t.iso_3166_1.toUpperCase())
+      );
+      
+      if (latinTitles.length > 0) {
+        const score = (t) => {
+          let s = 0;
+          const type = (t.type || '').toLowerCase();
+          if (type === '') s += 100;
+          else if (!type.includes('working')) s += 50;
+
+          if (t.iso_3166_1.toUpperCase() === 'IN') s += 10;
+          else if (['US', 'GB'].includes(t.iso_3166_1.toUpperCase())) s += 5;
+
+          return s;
+        };
+
+        latinTitles.sort((a, b) => score(b) - score(a));
+        return latinTitles[0].title;
+      }
+    }
+  } catch (err) {
+    console.error(`Error resolving alternative title for movie ${movie.id}:`, err.message);
+  }
+  
+  // Fallback to TMDB English title (which is always in Latin script)
+  return movie.title || originalTitle;
+}
+
 async function fetchFromTMDB(endpoint, params = {}) {
   const cacheKey = getCacheKey(endpoint, params);
   const cached = getFromCache(cacheKey);
@@ -305,6 +352,22 @@ async function fetchFromTMDB(endpoint, params = {}) {
 
   const response = await tmdbClient.get(endpoint, { params });
   let data = response.data;
+  
+  if (data && !endpoint.includes('alternative_titles')) {
+    if (Array.isArray(data.results)) {
+      data.results = await Promise.all(
+        data.results.map(async (movie) => {
+          if (movie) {
+            movie.title = await resolveBestTitle(movie);
+          }
+          return movie;
+        })
+      );
+    } else if (data.original_title) {
+      data.title = await resolveBestTitle(data);
+    }
+  }
+  
   setCache(cacheKey, data);
   return data;
 }
@@ -492,6 +555,10 @@ async function getMoviesByLanguage(page = 1, language, genres = []) {
   return movies;
 }
 
+async function discoverMovies(params = {}) {
+  return fetchFromTMDB('/discover/movie', params);
+}
+
 module.exports = {
   getPopularMovies,
   searchMovies,
@@ -508,4 +575,5 @@ module.exports = {
   getGenres,
   getTrendingMovies,
   getMoviesByLanguage,
+  discoverMovies,
 };
