@@ -107,7 +107,7 @@ function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000,
+    zIndex: 100000,
   };
 
   const modalStyle = {
