@@ -115,7 +115,7 @@ function Preferences() {
 
 
       const response = await fetch(
-        "http://localhost:5000/api/groups/preferences",
+        "https://cinecircle-backend-gjfd.onrender.com/api/groups/preferences",
         {
 
           method:"POST",
@@ -150,7 +150,7 @@ console.log("PREFERENCE SAVED:", data);
 
 
 const statusResponse = await fetch(
-  `http://localhost:5000/api/groups/status/${groupCode}`
+  `https://cinecircle-backend-gjfd.onrender.com/api/groups/status/${groupCode}`
 );
 
 
@@ -165,7 +165,7 @@ if(statusData.everyoneReady){
 
 
   const recResponse = await fetch(
-    "http://localhost:5000/api/groups/recommend",
+    "https://cinecircle-backend-gjfd.onrender.com/api/groups/recommend",
     {
       method:"POST",
       headers:{

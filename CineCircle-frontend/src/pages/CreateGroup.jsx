@@ -20,7 +20,7 @@ function CreateGroup() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/groups/create",
+        "https://cinecircle-backend-gjfd.onrender.com/api/groups/create",
         {
           method: "POST",
           headers: {

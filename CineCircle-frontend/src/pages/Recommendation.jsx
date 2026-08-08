@@ -120,7 +120,7 @@ function Recommendation() {
           saveRoomToHistory(groupCode, location.state?.groupName, parsed.username);
 
           if (localUser && localUser !== parsed.username) {
-            fetch("http://localhost:5000/api/groups/join", {
+            fetch("https://cinecircle-backend-gjfd.onrender.com/api/groups/join", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ 
@@ -150,7 +150,7 @@ function Recommendation() {
     if (!groupCode) return;
     async function fetchWatchlist() {
       try {
-        const res = await fetch(`http://localhost:5000/api/groups/group/${groupCode}`);
+        const res = await fetch(`https://cinecircle-backend-gjfd.onrender.com/api/groups/group/${groupCode}`);
         const data = await res.json();
         if (data && data.watchlist) {
           setGroupWatchlist(data.watchlist);
@@ -175,7 +175,7 @@ function Recommendation() {
     
     async function syncRecommendations() {
       try {
-        const response = await fetch("http://localhost:5000/api/groups/recommend", {
+        const response = await fetch("https://cinecircle-backend-gjfd.onrender.com/api/groups/recommend", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -204,7 +204,7 @@ function Recommendation() {
     setWinner(null); // Reset winner
     setVotedMovies({}); // Reset user votes
     try {
-      const response = await fetch("http://localhost:5000/api/groups/recommend", {
+      const response = await fetch("https://cinecircle-backend-gjfd.onrender.com/api/groups/recommend", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -236,7 +236,7 @@ function Recommendation() {
     setWinner(null); // Reset winner
     setVotedMovies({}); // Reset user votes
     try {
-      const response = await fetch("http://localhost:5000/api/groups/recommend/back", {
+      const response = await fetch("https://cinecircle-backend-gjfd.onrender.com/api/groups/recommend/back", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -268,7 +268,7 @@ function Recommendation() {
 
     const fetchVotes = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/groups/votes/${groupCode}`);
+        const response = await fetch(`https://cinecircle-backend-gjfd.onrender.com/api/groups/votes/${groupCode}`);
         if (response.ok) {
           const data = await response.json();
           if (data.votes) setVoteCounts(data.votes);
@@ -335,7 +335,7 @@ function Recommendation() {
   // Fetch Group Winner
   async function getWinner() {
     try {
-      const response = await fetch(`http://localhost:5000/api/groups/winner/${groupCode}`);
+      const response = await fetch(`https://cinecircle-backend-gjfd.onrender.com/api/groups/winner/${groupCode}`);
       const data = await response.json();
       setWinner(data);
     } catch (error) {
@@ -364,7 +364,7 @@ function Recommendation() {
   try {
 
     const response = await fetch(
-      "http://localhost:5000/api/groups/vote",
+      "https://cinecircle-backend-gjfd.onrender.com/api/groups/vote",
       {
         method: "POST",
         headers: {
@@ -508,7 +508,7 @@ function Recommendation() {
                 onClick={async () => {
                   try {
                     const myUsername = activeUser?.username || localUser || "Guest";
-                    await fetch(`http://localhost:5000/api/groups/${groupCode}/leave`, {
+                    await fetch(`https://cinecircle-backend-gjfd.onrender.com/api/groups/${groupCode}/leave`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ username: myUsername })
@@ -878,7 +878,7 @@ function Recommendation() {
                           onClick={async (e) => {
                             e.stopPropagation();
                             try {
-                              await fetch(`http://localhost:5000/api/groups/${groupCode}/watchlist/remove`, {
+                              await fetch(`https://cinecircle-backend-gjfd.onrender.com/api/groups/${groupCode}/watchlist/remove`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ movieId: m.id, username: myUsername })
@@ -933,7 +933,7 @@ function Recommendation() {
                       onClick={async (e) => {
                         e.stopPropagation();
                         try {
-                          const res = await fetch(`http://localhost:5000/api/groups/${groupCode}/watchlist/${m.id}/like`, {
+                          const res = await fetch(`https://cinecircle-backend-gjfd.onrender.com/api/groups/${groupCode}/watchlist/${m.id}/like`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ username: myUsername })
@@ -1213,7 +1213,7 @@ function Recommendation() {
                             likes: []
                           };
 
-                          const res = await fetch(`http://localhost:5000/api/groups/${groupCode}/watchlist/add`, {
+                          const res = await fetch(`https://cinecircle-backend-gjfd.onrender.com/api/groups/${groupCode}/watchlist/add`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ 

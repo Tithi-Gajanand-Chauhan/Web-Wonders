@@ -52,7 +52,7 @@ function WatchPartyModal({ isOpen, onClose, user, onOpenAuth }) {
      setErrorMessage('');
      setLoading(true);
      try {
-       const response = await fetch('http://localhost:5000/api/groups/join', {
+       const response = await fetch('https://cinecircle-backend-gjfd.onrender.com/api/groups/join', {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify({
@@ -141,7 +141,7 @@ function WatchPartyModal({ isOpen, onClose, user, onOpenAuth }) {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/groups/create', {
+      const response = await fetch('https://cinecircle-backend-gjfd.onrender.com/api/groups/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -200,7 +200,7 @@ function WatchPartyModal({ isOpen, onClose, user, onOpenAuth }) {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/groups/join', {
+      const response = await fetch('https://cinecircle-backend-gjfd.onrender.com/api/groups/join', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

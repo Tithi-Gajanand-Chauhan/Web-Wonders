@@ -59,7 +59,7 @@ function App() {
       const savedUser = localStorage.getItem('cinecircle_user');
       const parsedUser = savedUser ? JSON.parse(savedUser) : null;
       if (parsedUser) {
-        await fetch("http://localhost:5000/api/auth/logout", {
+        await fetch("https://cinecircle-backend-gjfd.onrender.com/api/auth/logout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: parsedUser.id || parsedUser._id })
