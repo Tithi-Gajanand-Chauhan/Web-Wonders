@@ -12,10 +12,85 @@ function GroupLobby() {
     currentUser,
   } = location.state || {};
 
+  const [localUser, setLocalUser] = useState(currentUser);
   const [members, setMembers] = useState(initialMembers);
   const [copied, setCopied] = useState(false);
   const [generating,setGenerating] = useState(false);
   const [groupWatchlist, setGroupWatchlist] = useState([]);
+
+  const [activeUser, setActiveUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cinecircle_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const saveRoomToHistory = (code, name, username) => {
+    const savedUser = localStorage.getItem('cinecircle_user');
+    if (!savedUser) return;
+    try {
+      const u = JSON.parse(savedUser);
+      const userId = u.id || u._id;
+      
+      // 1. Save to cinecircle_saved_rooms_${userId} (Navbar dropdown key)
+      const keyNavbar = `cinecircle_saved_rooms_${userId}`;
+      const existingNavbar = JSON.parse(localStorage.getItem(keyNavbar) || '[]');
+      const idxNavbar = existingNavbar.findIndex(r => r.code === code);
+      if (idxNavbar !== -1) {
+        existingNavbar[idxNavbar].username = username;
+      } else {
+        existingNavbar.unshift({ code, name: name || `Room ${code}`, username });
+      }
+      localStorage.setItem(keyNavbar, JSON.stringify(existingNavbar.slice(0, 5)));
+
+      // 2. Save to cinecircle_recent_rooms_${userId} (WatchPartyModal key)
+      const keyModal = `cinecircle_recent_rooms_${userId}`;
+      const existingModal = JSON.parse(localStorage.getItem(keyModal) || '[]');
+      const idxModal = existingModal.findIndex(r => r.code === code);
+      if (idxModal !== -1) {
+        existingModal[idxModal].username = username;
+      } else {
+        existingModal.unshift({ code, name: name || `Room ${code}`, joinedAt: Date.now(), username });
+      }
+      localStorage.setItem(keyModal, JSON.stringify(existingModal.slice(0, 4)));
+    } catch (e) {
+      console.error("Failed to save room to history", e);
+    }
+  };
+
+  useEffect(() => {
+    const checkAuthChange = () => {
+      try {
+        const saved = localStorage.getItem('cinecircle_user');
+        const parsed = saved ? JSON.parse(saved) : null;
+        
+        if (parsed && (!activeUser || parsed.username !== activeUser.username)) {
+          setActiveUser(parsed);
+          setLocalUser(parsed.username);
+          saveRoomToHistory(groupCode, groupName, parsed.username);
+
+          if (localUser && localUser !== parsed.username) {
+            fetch("http://localhost:5000/api/groups/join", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ code: groupCode, username: parsed.username })
+            }).catch(err => console.error("Auto-join mid-session failed:", err));
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    if (activeUser && groupCode) {
+      saveRoomToHistory(groupCode, groupName, localUser);
+    }
+
+    const authInterval = setInterval(checkAuthChange, 1000);
+    return () => clearInterval(authInterval);
+  }, [activeUser, groupCode, groupName, localUser]);
 
   useEffect(() => {
     if (!groupCode) return;
@@ -67,7 +142,7 @@ function GroupLobby() {
           navigate("/recommendation", {
             state: {
               groupCode,
-              currentUser,
+              currentUser: localUser,
               recommendations: finalRecs,
               compatibility: finalCompat,
               summary: finalSummary
@@ -80,7 +155,7 @@ function GroupLobby() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [groupCode, currentUser, navigate]);
+  }, [groupCode, localUser, navigate]);
 
 
 
@@ -159,7 +234,7 @@ useEffect(() => {
       state: {
         groupName,
         groupCode,
-        currentUser,
+        currentUser: localUser,
         members,
       },
     });

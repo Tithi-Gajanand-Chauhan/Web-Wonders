@@ -38,17 +38,24 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
   })();
 
   useEffect(() => {
-    if (user && (isHovered || isMenuOpen)) {
-      // Load states only when needed (hovered or menu open) to avoid excessive backend requests
+    if (user && movie.id) {
       fetchWatchedStatus(movie.id).then(data => setIsWatched(data.userWatched)).catch(console.error);
       fetchLikes(movie.id).then(data => setIsLiked(data.userLiked)).catch(console.error);
+    } else {
+      setIsWatched(false);
+      setIsLiked(false);
+    }
+  }, [movie.id, user]);
+
+  useEffect(() => {
+    if (user && (isHovered || isMenuOpen)) {
       fetchCustomLists().then(data => setCustomLists(data)).catch(console.error);
       fetchReviews(movie.id).then(data => {
         const myRev = data.reviews.find(r => String(r.userId) === String(user.id) || String(r.userId) === String(user._id));
         if (myRev) setRating(myRev.rating);
       }).catch(console.error);
     }
-  }, [movie.id, isHovered, isMenuOpen]);
+  }, [movie.id, isHovered, isMenuOpen, user]);
 
   const posterUrl = movie.poster_path
     ? (movie.poster_path.startsWith('/') ? `${IMAGE_BASE_URL}${movie.poster_path}` : movie.poster_path)
@@ -87,7 +94,7 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
       return;
     }
     try {
-      const data = await toggleWatchedStatus(movie.id);
+      const data = await toggleWatchedStatus(movie.id, movie);
       setIsWatched(data.userWatched);
     } catch (err) {
       console.error(err);
@@ -101,7 +108,7 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
       return;
     }
     try {
-      const data = await toggleLike(movie.id);
+      const data = await toggleLike(movie.id, movie);
       setIsLiked(data.liked);
     } catch (err) {
       console.error(err);
@@ -192,6 +199,26 @@ function MovieCard({ movie, rank, isTop10, onPlayTrailer, onToggleWatchlist, isS
           />
 
           {movie.badge && <span className="poster-badge-tag">{movie.badge}</span>}
+
+          {/* Top Corner Status Badges (Watched/Liked) */}
+          {user && (isWatched || isLiked) && (
+            <div className="card-status-badges" onClick={(e) => e.stopPropagation()}>
+              {isWatched && (
+                <span className="status-badge watched" title="Watched">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                  </svg>
+                </span>
+              )}
+              {isLiked && (
+                <span className="status-badge liked" title="Liked">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="poster-play-overlay">
             <div 

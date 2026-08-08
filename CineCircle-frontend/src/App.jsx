@@ -101,6 +101,11 @@ function App() {
   }, [user]);
 
   const toggleWatchlist = (movie) => {
+    if (!user) {
+      alert('Please log in or sign up to save movies to your watchlist.');
+      setIsAuthOpen(true);
+      return;
+    }
     setWatchlist((prev) => {
       const exists = prev.some((m) => m.id === movie.id);
       const nextList = exists ? prev.filter((m) => m.id !== movie.id) : [...prev, movie];
@@ -229,6 +234,7 @@ function App() {
         onRemoveFromWatchlist={removeFromWatchlist}
         onPlayTrailer={(movie) => setActiveTrailer(movie)}
         user={user}
+        onOpenAuth={() => setIsAuthOpen(true)}
       />
 
       {/* Watch Party Room Creation Modal */}

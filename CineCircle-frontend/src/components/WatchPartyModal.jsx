@@ -35,13 +35,13 @@ function WatchPartyModal({ isOpen, onClose, user }) {
     }
   }, [isOpen, user]);
 
-  const saveToHistory = (code, name) => {
+  const saveToHistory = (code, name, username) => {
     const key = user ? `cinecircle_recent_rooms_${user.id || user._id || 'global'}` : 'cinecircle_recent_rooms_guest';
     try {
       const saved = localStorage.getItem(key);
       let history = saved ? JSON.parse(saved) : [];
       history = history.filter(r => r.code !== code);
-      history.unshift({ code, name, joinedAt: Date.now() });
+      history.unshift({ code, name, joinedAt: Date.now(), username });
       localStorage.setItem(key, JSON.stringify(history.slice(0, 4)));
     } catch (err) {
       console.error('Failed to save to history:', err);
@@ -63,10 +63,12 @@ function WatchPartyModal({ isOpen, onClose, user }) {
     }
   };
 
-  const handleQuickJoin = async (code, name) => {
+  const handleQuickJoin = async (code, name, roomUsername) => {
     setErrorMessage('');
-    const cleanUsername = (activeTab === 'create' ? createUsername : joinUsername).trim();
-    if (!cleanUsername) {
+    const rejoinName = user ? user.username : (roomUsername || (activeTab === 'create' ? createUsername : joinUsername).trim());
+    const oldUsername = (user && roomUsername && roomUsername !== user.username) ? roomUsername : undefined;
+    
+    if (!rejoinName) {
       setErrorMessage('Please enter your name above first.');
       return;
     }
@@ -79,7 +81,8 @@ function WatchPartyModal({ isOpen, onClose, user }) {
         },
         body: JSON.stringify({
           code: code.toUpperCase(),
-          username: cleanUsername,
+          username: rejoinName,
+          oldUsername
         }),
       });
 
@@ -89,13 +92,13 @@ function WatchPartyModal({ isOpen, onClose, user }) {
         return;
       }
 
-      saveToHistory(code, name);
+      saveToHistory(code, name, rejoinName);
       onClose();
       navigate('/lobby', {
         state: {
           groupName: data.group.groupName,
           groupCode: data.group.code,
-          currentUser: cleanUsername,
+          currentUser: rejoinName,
           members: data.group.members || [],
         },
       });
@@ -143,7 +146,7 @@ function WatchPartyModal({ isOpen, onClose, user }) {
       const data = await response.json();
       console.log('Group created:', data);
 
-      saveToHistory(data.code, groupName.trim());
+      saveToHistory(data.code, groupName.trim(), createUsername.trim());
       onClose(); // Close the modal
       navigate('/lobby', {
         state: {
@@ -203,7 +206,7 @@ function WatchPartyModal({ isOpen, onClose, user }) {
         return;
       }
 
-      saveToHistory(data.group.code, data.group.groupName);
+      saveToHistory(data.group.code, data.group.groupName, cleanUsername);
       onClose(); // Close the modal
       navigate('/lobby', {
         state: {
@@ -388,7 +391,7 @@ function WatchPartyModal({ isOpen, onClose, user }) {
                   <button
                     type="button"
                     disabled={loading}
-                    onClick={() => handleQuickJoin(room.code, room.name)}
+                    onClick={() => handleQuickJoin(room.code, room.name, room.username)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',

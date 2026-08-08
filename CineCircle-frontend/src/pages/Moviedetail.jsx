@@ -149,7 +149,7 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist, user }) 
       return;
     }
     try {
-      const res = await toggleLike(movie.id);
+      const res = await toggleLike(movie.id, movie);
       setLikesData({
         likesCount: res.likesCount,
         userLiked: res.liked
@@ -165,7 +165,7 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist, user }) 
       return;
     }
     try {
-      const data = await toggleWatchedStatus(movie.id);
+      const data = await toggleWatchedStatus(movie.id, movie);
       setIsWatched(data.userWatched);
     } catch (err) {
       console.error('Failed to toggle watched status:', err);
@@ -456,7 +456,45 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist, user }) 
                       </div>
                     )}
                   </div>
-                ) : null;
+                ) : (
+                  <div style={{ marginTop: '24px', backgroundColor: '#161920', padding: '16px 20px', borderRadius: '12px', border: '1px solid #2b303c', maxWidth: '700px' }}>
+                    <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: '#FFF', margin: '0 0 8px 0', letterSpacing: '0.3px', textTransform: 'uppercase' }}>
+                      📺 Stream Availability
+                    </h4>
+                    <p style={{ fontSize: '0.85rem', color: '#888', margin: '0 0 12px 0' }}>
+                      This title is not currently listed on any major subscription streaming (OTT) platforms in your region.
+                    </p>
+                    <a
+                      href={`https://www.google.com/search?q=where+to+watch+${encodeURIComponent(movie.title)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 16px',
+                        border: '1px solid var(--accent-gold, #FFD700)',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        color: 'var(--accent-gold, #FFD700)',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        backgroundColor: 'rgba(255, 215, 0, 0.05)',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--accent-gold, #FFD700)';
+                        e.currentTarget.style.color = '#111';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 215, 0, 0.05)';
+                        e.currentTarget.style.color = 'var(--accent-gold, #FFD700)';
+                      }}
+                    >
+                      Search Stream Availability on Google 🔍
+                    </a>
+                  </div>
+                );
               })()}
             </div>
 

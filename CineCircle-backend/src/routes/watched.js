@@ -6,6 +6,7 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const auth = require('../middleware/auth');
 const Watched = require('../models/Watched');
+const tmdbService = require('../service/tmdbService');
 
 const WATCHED_FILE = path.join(__dirname, '../../data/watched.json');
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_for_cinecircle';
@@ -43,6 +44,69 @@ function writeJSONWatched(watched) {
 function isMongoActive() {
   return mongoose.connection.readyState === 1;
 }
+
+// GET /api/watched - Get all watched movies for the current user
+router.get('/', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    let list = [];
+    if (isMongoActive()) {
+      list = await Watched.find({ userId }).sort({ createdAt: -1 });
+    } else {
+      const allWatched = readJSONWatched();
+      list = allWatched
+        .filter(w => String(w.userId) === String(userId))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    let needsWrite = false;
+    const enrichedList = await Promise.all(list.map(async (item) => {
+      const itemObj = item.toObject ? item.toObject() : { ...item };
+      
+      if (!itemObj.title || !itemObj.poster_path) {
+        try {
+          const details = await tmdbService.getMovieDetails(itemObj.movieId);
+          if (details) {
+            itemObj.title = details.title || details.name;
+            itemObj.poster_path = details.poster_path;
+            itemObj.vote_average = details.vote_average;
+            itemObj.release_date = details.release_date;
+            
+            if (isMongoActive()) {
+              await Watched.findByIdAndUpdate(itemObj._id, {
+                title: itemObj.title,
+                poster_path: itemObj.poster_path,
+                vote_average: itemObj.vote_average,
+                release_date: itemObj.release_date
+              });
+            } else {
+              needsWrite = true;
+            }
+          }
+        } catch (e) {
+          console.error(`Failed to fetch details for watched movie ${itemObj.movieId}:`, e.message);
+        }
+      }
+      return itemObj;
+    }));
+
+    if (!isMongoActive() && needsWrite) {
+      const allWatched = readJSONWatched();
+      enrichedList.forEach(itemObj => {
+        const idx = allWatched.findIndex(w => String(w._id) === String(itemObj._id));
+        if (idx !== -1) {
+          allWatched[idx] = { ...allWatched[idx], ...itemObj };
+        }
+      });
+      writeJSONWatched(allWatched);
+    }
+
+    res.json(enrichedList);
+  } catch (err) {
+    console.error('Error fetching watched list:', err.message);
+    res.status(500).json({ error: 'Failed to fetch watched list' });
+  }
+});
 
 // GET /api/watched/:movieId - Check if current user has watched the movie
 router.get('/:movieId', async (req, res) => {
@@ -90,7 +154,15 @@ router.post('/:movieId/toggle', auth, async (req, res) => {
         await Watched.findByIdAndDelete(existing._id);
         userWatched = false;
       } else {
-        const newWatched = new Watched({ userId, movieId });
+        const { title, poster_path, vote_average, release_date } = req.body.movie || {};
+        const newWatched = new Watched({
+          userId,
+          movieId,
+          title,
+          poster_path,
+          vote_average,
+          release_date
+        });
         await newWatched.save();
         userWatched = true;
       }
@@ -102,10 +174,15 @@ router.post('/:movieId/toggle', auth, async (req, res) => {
         allWatched.splice(existingIndex, 1);
         userWatched = false;
       } else {
+        const { title, poster_path, vote_average, release_date } = req.body.movie || {};
         allWatched.push({
           _id: Math.random().toString(36).substring(2, 9),
           userId,
           movieId,
+          title,
+          poster_path,
+          vote_average,
+          release_date,
           createdAt: new Date().toISOString()
         });
         userWatched = true;

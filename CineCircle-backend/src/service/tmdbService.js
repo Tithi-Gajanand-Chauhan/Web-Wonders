@@ -215,8 +215,55 @@ function mockFetchFromTMDB(endpoint, params) {
       }
       const movieId = parseInt(parts[2]);
       const mockMovie = MOCK_MOVIES.find(m => m.id === movieId) || MOCK_MOVIES[0];
+      
+      const mockProviders = {
+        results: {
+          IN: {
+            link: "https://www.themoviedb.org",
+            flatrate: [
+              {
+                logo_path: "/wwemzKWzjKYJFfCeiBdf7qH4lHS.jpg",
+                provider_id: 8,
+                provider_name: "Netflix",
+                display_priority: 0
+              },
+              {
+                logo_path: "/5NyHNqi0IAj5A51J6Rj4bFW1h0A.jpg",
+                provider_id: 119,
+                provider_name: "Amazon Prime Video",
+                display_priority: 1
+              },
+              {
+                logo_path: "/7rw0Es1h5jVbp54e8W4NxtA2jG1.jpg",
+                provider_id: 122,
+                provider_name: "Disney+ Hotstar",
+                display_priority: 2
+              }
+            ]
+          },
+          US: {
+            link: "https://www.themoviedb.org",
+            flatrate: [
+              {
+                logo_path: "/wwemzKWzjKYJFfCeiBdf7qH4lHS.jpg",
+                provider_id: 8,
+                provider_name: "Netflix",
+                display_priority: 0
+              },
+              {
+                logo_path: "/5NyHNqi0IAj5A51J6Rj4bFW1h0A.jpg",
+                provider_id: 119,
+                provider_name: "Amazon Prime Video",
+                display_priority: 1
+              }
+            ]
+          }
+        }
+      };
+
       return {
         ...enrichMockMovie(mockMovie),
+        "watch/providers": mockProviders,
         credits: {
           cast: [
             { name: "Actor A", character: "Hero" },

@@ -1,20 +1,99 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchCustomLists, createCustomList, deleteCustomList, removeMovieFromCustomList } from '../services/api';
+import { 
+  fetchCustomLists, 
+  createCustomList, 
+  deleteCustomList, 
+  removeMovieFromCustomList,
+  fetchWatchedList,
+  toggleWatchedStatus,
+  fetchLikesList,
+  toggleLike
+} from '../services/api';
 
-function WatchlistModal({ isOpen, onClose, watchlist, onRemoveFromWatchlist, onPlayTrailer, user }) {
+function WatchlistModal({ isOpen, onClose, watchlist, onRemoveFromWatchlist, onPlayTrailer, user, onOpenAuth }) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('watchlist'); // 'watchlist' or 'custom'
+  const [activeTab, setActiveTab] = useState('watchlist'); // 'watchlist', 'watched', 'likes', 'custom'
   const [customLists, setCustomLists] = useState([]);
+  const [watchedList, setWatchedList] = useState([]);
+  const [likedList, setLikedList] = useState([]);
   const [selectedList, setSelectedList] = useState(null); // to drill down into a list
   const [newListName, setNewListName] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (isOpen && user) {
+      loadWatchedList();
+      loadLikedList();
+      if (activeTab === 'custom') {
+        loadCustomLists();
+      }
+    }
+  }, [isOpen, user]);
+
+  useEffect(() => {
     if (isOpen && user && activeTab === 'custom') {
       loadCustomLists();
     }
-  }, [isOpen, user, activeTab]);
+  }, [activeTab]);
+
+  const loadWatchedList = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchWatchedList();
+      const movies = data.map(item => ({
+        id: item.movieId,
+        title: item.title || 'Untitled Movie',
+        poster_path: item.poster_path,
+        vote_average: item.vote_average,
+        release_date: item.release_date
+      }));
+      setWatchedList(movies);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadLikedList = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchLikesList();
+      const movies = data.map(item => ({
+        id: item.movieId,
+        title: item.title || 'Untitled Movie',
+        poster_path: item.poster_path,
+        vote_average: item.vote_average,
+        release_date: item.release_date
+      }));
+      setLikedList(movies);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveWatched = async (movieId) => {
+    try {
+      const movieObj = watchedList.find(m => m.id === movieId);
+      await toggleWatchedStatus(movieId, movieObj);
+      setWatchedList(prev => prev.filter(m => m.id !== movieId));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleRemoveLiked = async (movieId) => {
+    try {
+      const movieObj = likedList.find(m => m.id === movieId);
+      await toggleLike(movieId, movieObj);
+      setLikedList(prev => prev.filter(m => m.id !== movieId));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const loadCustomLists = async () => {
     try {
@@ -85,43 +164,77 @@ function WatchlistModal({ isOpen, onClose, watchlist, onRemoveFromWatchlist, onP
           display: 'flex',
           borderBottom: '1px solid #2e3440',
           marginBottom: '16px',
-          padding: '0 20px'
+          padding: '0 10px',
+          overflowX: 'auto',
+          scrollbarWidth: 'none'
         }}>
           <button
             onClick={() => { setActiveTab('watchlist'); setSelectedList(null); }}
             style={{
-              flex: 1,
+              flex: '1 0 auto',
               background: 'none',
               border: 'none',
               borderBottom: activeTab === 'watchlist' ? '2px solid var(--accent-gold, #FFD700)' : '2px solid transparent',
               color: activeTab === 'watchlist' ? '#fff' : '#9ca3af',
-              padding: '10px 0',
+              padding: '10px 12px',
               fontWeight: 600,
               cursor: 'pointer',
-              fontSize: '0.9rem'
+              fontSize: '0.85rem'
             }}
           >
             Watchlist ({watchlist.length})
           </button>
           <button
-            onClick={() => setActiveTab('custom')}
+            onClick={() => { setActiveTab('watched'); setSelectedList(null); }}
             style={{
-              flex: 1,
+              flex: '1 0 auto',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'watched' ? '2px solid var(--accent-gold, #FFD700)' : '2px solid transparent',
+              color: activeTab === 'watched' ? '#fff' : '#9ca3af',
+              padding: '10px 12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: '0.85rem'
+            }}
+          >
+            Watched ({watchedList.length})
+          </button>
+          <button
+            onClick={() => { setActiveTab('likes'); setSelectedList(null); }}
+            style={{
+              flex: '1 0 auto',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'likes' ? '2px solid var(--accent-gold, #FFD700)' : '2px solid transparent',
+              color: activeTab === 'likes' ? '#fff' : '#9ca3af',
+              padding: '10px 12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: '0.85rem'
+            }}
+          >
+            Liked ({likedList.length})
+          </button>
+          <button
+            onClick={() => { setActiveTab('custom'); setSelectedList(null); }}
+            style={{
+              flex: '1 0 auto',
               background: 'none',
               border: 'none',
               borderBottom: activeTab === 'custom' ? '2px solid var(--accent-gold, #FFD700)' : '2px solid transparent',
               color: activeTab === 'custom' ? '#fff' : '#9ca3af',
-              padding: '10px 0',
+              padding: '10px 12px',
               fontWeight: 600,
               cursor: 'pointer',
-              fontSize: '0.9rem'
+              fontSize: '0.85rem'
             }}
           >
             Custom Lists
           </button>
         </div>
 
-        {activeTab === 'watchlist' ? (
+        {activeTab === 'watchlist' && (
           watchlist.length === 0 ? (
             <div className="empty-watchlist">
               <p>Your list is currently empty.</p>
@@ -169,12 +282,187 @@ function WatchlistModal({ isOpen, onClose, watchlist, onRemoveFromWatchlist, onP
               ))}
             </div>
           )
-        ) : (
+        )}
+
+        {activeTab === 'watched' && (
+          !user ? (
+            <div className="empty-watchlist" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '40px 20px', textAlign: 'center' }}>
+              <p style={{ margin: 0, color: '#9ca3af' }}>Please sign in to view and track your watched movies.</p>
+              <button 
+                onClick={() => { onClose(); onOpenAuth(); }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#E50914',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  fontSize: '0.88rem',
+                  boxShadow: '0 4px 12px rgba(229, 9, 20, 0.3)',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#b80710'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#E50914'}
+              >
+                Sign In 🚪
+              </button>
+            </div>
+          ) : watchedList.length === 0 ? (
+            <div className="empty-watchlist">
+              <p>You haven't marked any movies as watched yet.</p>
+              <p className="subtext">Hover over any card and click the eye symbol to mark it as watched.</p>
+            </div>
+          ) : (
+            <div className="watchlist-grid">
+              {watchedList.map((movie) => (
+                <div key={movie.id} className="watchlist-item">
+                  <img
+                    src={movie.poster_path ? `${IMAGE_BASE_URL}${movie.poster_path}` : 'https://via.placeholder.com/150'}
+                    alt={movie.title}
+                    className="watchlist-poster"
+                    onClick={() => {
+                      onClose();
+                      navigate(`/movie/${movie.id}`);
+                    }}
+                  />
+                  <div className="watchlist-item-info">
+                    <h4>{movie.title}</h4>
+                    <div className="watchlist-item-meta">
+                      {movie.vote_average > 0 && <span>Rating {movie.vote_average?.toFixed(1)}</span>}
+                      {movie.release_date && (
+                        <>
+                          <span>•</span>
+                          <span>{movie.release_date?.split('-')[0]}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="watchlist-item-actions">
+                      <button
+                        className="btn-mini btn-play"
+                        onClick={() => {
+                          onClose();
+                          onPlayTrailer(movie);
+                        }}
+                      >
+                        Play
+                      </button>
+                      <button
+                        className="btn-mini btn-remove"
+                        onClick={() => handleRemoveWatched(movie.id)}
+                      >
+                        Unwatch
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {activeTab === 'likes' && (
+          !user ? (
+            <div className="empty-watchlist" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '40px 20px', textAlign: 'center' }}>
+              <p style={{ margin: 0, color: '#9ca3af' }}>Please sign in to view and like movies.</p>
+              <button 
+                onClick={() => { onClose(); onOpenAuth(); }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#E50914',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  fontSize: '0.88rem',
+                  boxShadow: '0 4px 12px rgba(229, 9, 20, 0.3)',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#b80710'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#E50914'}
+              >
+                Sign In 🚪
+              </button>
+            </div>
+          ) : likedList.length === 0 ? (
+            <div className="empty-watchlist">
+              <p>You haven't liked any movies yet.</p>
+              <p className="subtext">Hover over any card and click the heart symbol to like it.</p>
+            </div>
+          ) : (
+            <div className="watchlist-grid">
+              {likedList.map((movie) => (
+                <div key={movie.id} className="watchlist-item">
+                  <img
+                    src={movie.poster_path ? `${IMAGE_BASE_URL}${movie.poster_path}` : 'https://via.placeholder.com/150'}
+                    alt={movie.title}
+                    className="watchlist-poster"
+                    onClick={() => {
+                      onClose();
+                      navigate(`/movie/${movie.id}`);
+                    }}
+                  />
+                  <div className="watchlist-item-info">
+                    <h4>{movie.title}</h4>
+                    <div className="watchlist-item-meta">
+                      {movie.vote_average > 0 && <span>Rating {movie.vote_average?.toFixed(1)}</span>}
+                      {movie.release_date && (
+                        <>
+                          <span>•</span>
+                          <span>{movie.release_date?.split('-')[0]}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="watchlist-item-actions">
+                      <button
+                        className="btn-mini btn-play"
+                        onClick={() => {
+                          onClose();
+                          onPlayTrailer(movie);
+                        }}
+                      >
+                        Play
+                      </button>
+                      <button
+                        className="btn-mini btn-remove"
+                        onClick={() => handleRemoveLiked(movie.id)}
+                      >
+                        Unlike
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {activeTab === 'custom' && (
           /* Custom Lists View */
           <div style={{ padding: '0 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
             {!user ? (
-              <div className="empty-watchlist">
-                <p>Please Sign In to manage customized lists.</p>
+              <div className="empty-watchlist" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '40px 20px', textAlign: 'center' }}>
+                <p style={{ margin: 0, color: '#9ca3af' }}>Please sign in to manage customized lists.</p>
+                <button 
+                  onClick={() => { onClose(); onOpenAuth(); }}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#E50914',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    fontSize: '0.88rem',
+                    boxShadow: '0 4px 12px rgba(229, 9, 20, 0.3)',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#b80710'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#E50914'}
+                >
+                  Sign In 🚪
+                </button>
               </div>
             ) : selectedList ? (
               /* Inside a specific Custom List */

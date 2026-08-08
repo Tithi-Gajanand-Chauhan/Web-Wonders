@@ -56,7 +56,7 @@ router.post("/create", async (req, res) => {
 
 // Join Group
 router.post("/join", async (req, res) => {
-  const { code, username } = req.body;
+  const { code, username, oldUsername } = req.body;
 
   if (!code || !username) {
     return res.status(400).json({
@@ -74,14 +74,55 @@ router.post("/join", async (req, res) => {
       });
     }
 
-    if (group.locked) {
+    // Handle mid-session guest to registered user migration
+    if (oldUsername && oldUsername.toLowerCase().trim() !== username.toLowerCase().trim()) {
+      const oldIdx = group.members.findIndex(
+        m => m.toLowerCase().trim() === oldUsername.toLowerCase().trim()
+      );
+      if (oldIdx !== -1) {
+        // Replace in members list
+        group.members[oldIdx] = username;
+
+        // Replace in preferences
+        if (group.preferences) {
+          group.preferences.forEach(pref => {
+            if (pref.user && pref.user.toLowerCase().trim() === oldUsername.toLowerCase().trim()) {
+              pref.user = username;
+            }
+          });
+        }
+
+        // Replace in votes
+        if (group.votes) {
+          Object.keys(group.votes).forEach(movieId => {
+            const voteObj = group.votes[movieId];
+            if (voteObj && voteObj.users) {
+              const uIdx = voteObj.users.findIndex(
+                u => u.toLowerCase().trim() === oldUsername.toLowerCase().trim()
+              );
+              if (uIdx !== -1) {
+                voteObj.users[uIdx] = username;
+              }
+            }
+          });
+        }
+
+        await db.saveGroup(code, group);
+      }
+    }
+
+    const isAlreadyMember = group.members.some(
+      m => m.toLowerCase().trim() === username.toLowerCase().trim()
+    );
+
+    if (group.locked && !isAlreadyMember) {
       return res.status(400).json({
         success: false,
         message: "This group has already started recommendations."
       });
     }
 
-    if (!group.members.includes(username)) {
+    if (!isAlreadyMember) {
       group.members.push(username);
       await db.saveGroup(code, group);
     }

@@ -108,10 +108,24 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
     [rows, safeSearch, genreFilter, yearFilter, ratingFilter]
   );
 
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '80vh',
+        backgroundColor: '#141414'
+      }}>
+        <div className="spinner" />
+      </div>
+    );
+  }
+
   return (
     <main className="home-page-layout">
       {/* Hero Spotlight Featured Banner */}
-      {!loading && filteredRows.popular.length > 0 && (
+      {filteredRows.popular.length > 0 && (
         <HeroSpotlight
           movies={filteredRows.popular}
           onPlayTrailer={onPlayTrailer}
@@ -217,9 +231,6 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
         />
 
         {/* Categorized Movie Rows */}
-        {loading ? (
-          <div className="status-message">Loading titles...</div>
-        ) : (
           <>
              <MovieRow
               title="New Releases & Recent Hits"
@@ -302,7 +313,6 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
               section="gujarati"
             />
           </>
-        )}
       </div>
     </main>
   );

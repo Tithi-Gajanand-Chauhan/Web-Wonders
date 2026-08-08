@@ -53,6 +53,7 @@ function Recommendation() {
     summary: savedSummary = "",
   } = location.state || {};
 
+  const [localUser, setLocalUser] = useState(currentUser);
   const [recommendations, setRecommendations] = useState(savedRecommendations);
   const [compatibility, setCompatibility] = useState(savedCompatibility);
   const [summary, setSummary] = useState(savedSummary);
@@ -64,6 +65,80 @@ function Recommendation() {
   const [hasPrev, setHasPrev] = useState(false);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [groupWatchlist, setGroupWatchlist] = useState([]);
+
+  const [activeUser, setActiveUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cinecircle_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const saveRoomToHistory = (code, name, username) => {
+    const savedUser = localStorage.getItem('cinecircle_user');
+    if (!savedUser) return;
+    try {
+      const u = JSON.parse(savedUser);
+      const userId = u.id || u._id;
+      
+      // 1. Save to cinecircle_saved_rooms_${userId} (Navbar dropdown key)
+      const keyNavbar = `cinecircle_saved_rooms_${userId}`;
+      const existingNavbar = JSON.parse(localStorage.getItem(keyNavbar) || '[]');
+      const idxNavbar = existingNavbar.findIndex(r => r.code === code);
+      if (idxNavbar !== -1) {
+        existingNavbar[idxNavbar].username = username;
+      } else {
+        existingNavbar.unshift({ code, name: name || `Room ${code}`, username });
+      }
+      localStorage.setItem(keyNavbar, JSON.stringify(existingNavbar.slice(0, 5)));
+
+      // 2. Save to cinecircle_recent_rooms_${userId} (WatchPartyModal key)
+      const keyModal = `cinecircle_recent_rooms_${userId}`;
+      const existingModal = JSON.parse(localStorage.getItem(keyModal) || '[]');
+      const idxModal = existingModal.findIndex(r => r.code === code);
+      if (idxModal !== -1) {
+        existingModal[idxModal].username = username;
+      } else {
+        existingModal.unshift({ code, name: name || `Room ${code}`, joinedAt: Date.now(), username });
+      }
+      localStorage.setItem(keyModal, JSON.stringify(existingModal.slice(0, 4)));
+    } catch (e) {
+      console.error("Failed to save room to history", e);
+    }
+  };
+
+  useEffect(() => {
+    const checkAuthChange = () => {
+      try {
+        const saved = localStorage.getItem('cinecircle_user');
+        const parsed = saved ? JSON.parse(saved) : null;
+        
+        if (parsed && (!activeUser || parsed.username !== activeUser.username)) {
+          setActiveUser(parsed);
+          setLocalUser(parsed.username);
+          saveRoomToHistory(groupCode, location.state?.groupName, parsed.username);
+
+          if (localUser && localUser !== parsed.username) {
+            fetch("http://localhost:5000/api/groups/join", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ code: groupCode, username: parsed.username, oldUsername: localUser })
+            }).catch(err => console.error("Auto-join mid-session failed:", err));
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    if (activeUser && groupCode) {
+      saveRoomToHistory(groupCode, location.state?.groupName, localUser);
+    }
+
+    const authInterval = setInterval(checkAuthChange, 1000);
+    return () => clearInterval(authInterval);
+  }, [activeUser, groupCode, localUser]);
 
   // Fetch group watchlist on mount
   useEffect(() => {
@@ -293,7 +368,7 @@ function Recommendation() {
           groupCode,
           movieId,
           movieTitle: targetMovie?.title,
-          username: currentUser,
+          username: localUser,
           action: isCurrentlyVoted
             ? "unvote"
             : "vote"
@@ -962,7 +1037,7 @@ function Recommendation() {
                             compatibility,
                             summary,
                             groupCode,
-                            currentUser,
+                            currentUser: localUser,
                           },
                         })
                       }
@@ -1021,7 +1096,13 @@ function Recommendation() {
                               if (!exists) return [...prev, movieObj];
                               return prev;
                             });
-                            alert(`"${movie.title}" saved to the Shared Room Watchlist! 🍿`);
+
+                            const hasUser = !!localStorage.getItem('cinecircle_user');
+                            if (!hasUser) {
+                              alert(`"${movie.title}" saved to the Shared Room Watchlist! 🍿\n\nNote: If you want to save this recommendation to your personal profile permanently, please sign in or sign up first!`);
+                            } else {
+                              alert(`"${movie.title}" saved to the Shared Room Watchlist! 🍿`);
+                            }
                           }
                         } catch (err) {
                           console.error("Failed to add to shared watchlist:", err);

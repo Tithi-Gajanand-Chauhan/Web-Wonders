@@ -504,6 +504,45 @@ export const getMovieDetails = async (id) => {
   const found = CURATED_MOVIES.find(m => m.id === Number(id)) || CURATED_MOVIES[0];
   return {
     ...found,
+    "watch/providers": {
+      results: {
+        IN: {
+          link: "https://www.themoviedb.org",
+          flatrate: [
+            {
+              logo_path: "/wwemzKWzjKYJFfCeiBdf7qH4lHS.jpg",
+              provider_id: 8,
+              provider_name: "Netflix"
+            },
+            {
+              logo_path: "/5NyHNqi0IAj5A51J6Rj4bFW1h0A.jpg",
+              provider_id: 119,
+              provider_name: "Amazon Prime Video"
+            },
+            {
+              logo_path: "/7rw0Es1h5jVbp54e8W4NxtA2jG1.jpg",
+              provider_id: 122,
+              provider_name: "Disney+ Hotstar"
+            }
+          ]
+        },
+        US: {
+          link: "https://www.themoviedb.org",
+          flatrate: [
+            {
+              logo_path: "/wwemzKWzjKYJFfCeiBdf7qH4lHS.jpg",
+              provider_id: 8,
+              provider_name: "Netflix"
+            },
+            {
+              logo_path: "/5NyHNqi0IAj5A51J6Rj4bFW1h0A.jpg",
+              provider_id: 119,
+              provider_name: "Amazon Prime Video"
+            }
+          ]
+        }
+      }
+    },
     genres: MOCK_GENRES.filter(g => found.genre_ids?.includes(g.id)),
     credits: {
       cast: found.cast || [],
@@ -544,8 +583,18 @@ export const fetchLikes = async (movieId) => {
   }
 };
 
-export const toggleLike = async (movieId) => {
-  const response = await api.post(`/likes/${movieId}/toggle`);
+export const fetchLikesList = async () => {
+  try {
+    const response = await api.get('/likes');
+    return response.data;
+  } catch (e) {
+    console.error('fetchLikesList error:', e);
+    return [];
+  }
+};
+
+export const toggleLike = async (movieId, movieData = null) => {
+  const response = await api.post(`/likes/${movieId}/toggle`, { movie: movieData });
   return response.data;
 };
 
@@ -597,8 +646,18 @@ export const fetchWatchedStatus = async (movieId) => {
   }
 };
 
-export const toggleWatchedStatus = async (movieId) => {
-  const response = await api.post(`/watched/${movieId}/toggle`);
+export const fetchWatchedList = async () => {
+  try {
+    const response = await api.get('/watched');
+    return response.data;
+  } catch (e) {
+    console.error('fetchWatchedList error:', e);
+    return [];
+  }
+};
+
+export const toggleWatchedStatus = async (movieId, movieData = null) => {
+  const response = await api.post(`/watched/${movieId}/toggle`, { movie: movieData });
   return response.data;
 };
 
