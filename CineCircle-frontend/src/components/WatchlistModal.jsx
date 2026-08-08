@@ -21,6 +21,53 @@ function WatchlistModal({ isOpen, onClose, watchlist, onRemoveFromWatchlist, onP
   const [newListName, setNewListName] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('none');
+
+  useEffect(() => {
+    setSearchQuery('');
+    setSortBy('none');
+  }, [activeTab, selectedList, isOpen]);
+
+  const getProcessedMovies = (list) => {
+    if (!list) return [];
+    let result = [...list];
+    
+    // Title filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(m => m.title && m.title.toLowerCase().includes(q));
+    }
+    
+    // Sort logic
+    if (sortBy === 'title-asc') {
+      result.sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortBy === 'title-desc') {
+      result.sort((a, b) => b.title.localeCompare(a.title));
+    } else if (sortBy === 'year-new') {
+      result.sort((a, b) => {
+        const yA = a.release_date ? new Date(a.release_date).getFullYear() : 0;
+        const yB = b.release_date ? new Date(b.release_date).getFullYear() : 0;
+        return yB - yA;
+      });
+    } else if (sortBy === 'year-old') {
+      result.sort((a, b) => {
+        const yA = a.release_date ? new Date(a.release_date).getFullYear() : 0;
+        const yB = b.release_date ? new Date(b.release_date).getFullYear() : 0;
+        return yA - yB;
+      });
+    } else if (sortBy === 'rating-high') {
+      result.sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+    }
+    
+    return result;
+  };
+
+  const processedWatchlist = getProcessedMovies(watchlist);
+  const processedWatched = getProcessedMovies(watchedList);
+  const processedLiked = getProcessedMovies(likedList);
+  const processedCustomMovies = selectedList ? getProcessedMovies(selectedList.movies) : [];
+
   useEffect(() => {
     if (isOpen && user) {
       loadWatchedList();
@@ -234,15 +281,67 @@ function WatchlistModal({ isOpen, onClose, watchlist, onRemoveFromWatchlist, onP
           </button>
         </div>
 
+        {!(activeTab === 'custom' && !selectedList) && (
+          <div style={{
+            display: 'flex',
+            gap: '10px',
+            padding: '0 16px 12px 16px',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            marginBottom: '12px'
+          }}>
+            <input
+              type="text"
+              placeholder="Search by title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                flex: 1,
+                background: 'rgba(0,0,0,0.3)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '6px',
+                padding: '8px 12px',
+                color: '#fff',
+                fontSize: '0.82rem',
+                outline: 'none'
+              }}
+            />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{
+                background: 'rgba(0,0,0,0.3)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '6px',
+                padding: '8px 12px',
+                color: '#fff',
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="none">Sort By</option>
+              <option value="title-asc">A-Z</option>
+              <option value="title-desc">Z-A</option>
+              <option value="year-new">Newest First</option>
+              <option value="year-old">Oldest First</option>
+              <option value="rating-high">Top Rated</option>
+            </select>
+          </div>
+        )}
+
         {activeTab === 'watchlist' && (
           watchlist.length === 0 ? (
             <div className="empty-watchlist">
               <p>Your list is currently empty.</p>
               <p className="subtext">Hover over any title and click + to add titles to your list.</p>
             </div>
+          ) : processedWatchlist.length === 0 ? (
+            <div className="empty-watchlist">
+              <p>No matching movies found.</p>
+            </div>
           ) : (
             <div className="watchlist-grid">
-              {watchlist.map((movie) => (
+              {processedWatchlist.map((movie) => (
                 <div key={movie.id} className="watchlist-item">
                   <img
                     src={movie.poster_path ? `${IMAGE_BASE_URL}${movie.poster_path}` : 'https://via.placeholder.com/150'}
@@ -313,9 +412,13 @@ function WatchlistModal({ isOpen, onClose, watchlist, onRemoveFromWatchlist, onP
               <p>You haven't marked any movies as watched yet.</p>
               <p className="subtext">Hover over any card and click the eye symbol to mark it as watched.</p>
             </div>
+          ) : processedWatched.length === 0 ? (
+            <div className="empty-watchlist">
+              <p>No matching movies found.</p>
+            </div>
           ) : (
             <div className="watchlist-grid">
-              {watchedList.map((movie) => (
+              {processedWatched.map((movie) => (
                 <div key={movie.id} className="watchlist-item">
                   <img
                     src={movie.poster_path ? `${IMAGE_BASE_URL}${movie.poster_path}` : 'https://via.placeholder.com/150'}
@@ -390,9 +493,13 @@ function WatchlistModal({ isOpen, onClose, watchlist, onRemoveFromWatchlist, onP
               <p>You haven't liked any movies yet.</p>
               <p className="subtext">Hover over any card and click the heart symbol to like it.</p>
             </div>
+          ) : processedLiked.length === 0 ? (
+            <div className="empty-watchlist">
+              <p>No matching movies found.</p>
+            </div>
           ) : (
             <div className="watchlist-grid">
-              {likedList.map((movie) => (
+              {processedLiked.map((movie) => (
                 <div key={movie.id} className="watchlist-item">
                   <img
                     src={movie.poster_path ? `${IMAGE_BASE_URL}${movie.poster_path}` : 'https://via.placeholder.com/150'}
@@ -508,9 +615,13 @@ function WatchlistModal({ isOpen, onClose, watchlist, onRemoveFromWatchlist, onP
                   <p style={{ color: '#6b7280', fontSize: '0.85rem', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
                     This list is empty. Go to movie details and click "Add to List".
                   </p>
+                ) : processedCustomMovies.length === 0 ? (
+                  <p style={{ color: '#6b7280', fontSize: '0.85rem', fontStyle: 'italic', textAlign: 'center', marginTop: '20px' }}>
+                    No matching movies found.
+                  </p>
                 ) : (
                   <div className="watchlist-grid" style={{ overflowY: 'auto', flex: 1 }}>
-                    {selectedList.movies.map((movie) => (
+                    {processedCustomMovies.map((movie) => (
                       <div key={movie.id} className="watchlist-item">
                         <img
                           src={movie.poster_path ? `${IMAGE_BASE_URL}${movie.poster_path}` : 'https://via.placeholder.com/150'}

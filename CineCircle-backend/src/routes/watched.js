@@ -63,7 +63,7 @@ router.get('/', auth, async (req, res) => {
     const enrichedList = await Promise.all(list.map(async (item) => {
       const itemObj = item.toObject ? item.toObject() : { ...item };
       
-      if (!itemObj.title || !itemObj.poster_path) {
+      if (!itemObj.title || !itemObj.poster_path || !itemObj.genre_ids || itemObj.genre_ids.length === 0) {
         try {
           const details = await tmdbService.getMovieDetails(itemObj.movieId);
           if (details) {
@@ -72,12 +72,21 @@ router.get('/', auth, async (req, res) => {
             itemObj.vote_average = details.vote_average;
             itemObj.release_date = details.release_date;
             
+            let finalGenreIds = [];
+            if (details.genre_ids && Array.isArray(details.genre_ids)) {
+              finalGenreIds = details.genre_ids;
+            } else if (details.genres && Array.isArray(details.genres)) {
+              finalGenreIds = details.genres.map(g => typeof g === 'object' ? g.id : g).filter(Boolean);
+            }
+            itemObj.genre_ids = finalGenreIds;
+            
             if (isMongoActive()) {
               await Watched.findByIdAndUpdate(itemObj._id, {
                 title: itemObj.title,
                 poster_path: itemObj.poster_path,
                 vote_average: itemObj.vote_average,
-                release_date: itemObj.release_date
+                release_date: itemObj.release_date,
+                genre_ids: itemObj.genre_ids
               });
             } else {
               needsWrite = true;
@@ -154,14 +163,22 @@ router.post('/:movieId/toggle', auth, async (req, res) => {
         await Watched.findByIdAndDelete(existing._id);
         userWatched = false;
       } else {
-        const { title, poster_path, vote_average, release_date } = req.body.movie || {};
+        const movieData = req.body.movie || {};
+        let finalGenreIds = [];
+        if (movieData.genre_ids && Array.isArray(movieData.genre_ids)) {
+          finalGenreIds = movieData.genre_ids;
+        } else if (movieData.genres && Array.isArray(movieData.genres)) {
+          finalGenreIds = movieData.genres.map(g => typeof g === 'object' ? g.id : g).filter(Boolean);
+        }
+
         const newWatched = new Watched({
           userId,
           movieId,
-          title,
-          poster_path,
-          vote_average,
-          release_date
+          title: movieData.title,
+          poster_path: movieData.poster_path,
+          vote_average: movieData.vote_average,
+          release_date: movieData.release_date,
+          genre_ids: finalGenreIds
         });
         await newWatched.save();
         userWatched = true;
@@ -174,15 +191,23 @@ router.post('/:movieId/toggle', auth, async (req, res) => {
         allWatched.splice(existingIndex, 1);
         userWatched = false;
       } else {
-        const { title, poster_path, vote_average, release_date } = req.body.movie || {};
+        const movieData = req.body.movie || {};
+        let finalGenreIds = [];
+        if (movieData.genre_ids && Array.isArray(movieData.genre_ids)) {
+          finalGenreIds = movieData.genre_ids;
+        } else if (movieData.genres && Array.isArray(movieData.genres)) {
+          finalGenreIds = movieData.genres.map(g => typeof g === 'object' ? g.id : g).filter(Boolean);
+        }
+
         allWatched.push({
           _id: Math.random().toString(36).substring(2, 9),
           userId,
           movieId,
-          title,
-          poster_path,
-          vote_average,
-          release_date,
+          title: movieData.title,
+          poster_path: movieData.poster_path,
+          vote_average: movieData.vote_average,
+          release_date: movieData.release_date,
+          genre_ids: finalGenreIds,
           createdAt: new Date().toISOString()
         });
         userWatched = true;

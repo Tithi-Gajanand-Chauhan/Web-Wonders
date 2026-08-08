@@ -7,6 +7,7 @@ const WatchedSchema = new mongoose.Schema({
   poster_path: { type: String },
   vote_average: { type: Number },
   release_date: { type: String },
+  genre_ids: { type: [Number] },
 }, { timestamps: true });
 
 WatchedSchema.index({ userId: 1, movieId: 1 }, { unique: true });

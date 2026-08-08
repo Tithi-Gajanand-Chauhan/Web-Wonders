@@ -17,6 +17,7 @@ import AuthModal from './components/AuthModal';
 import IntroPage from './pages/IntroPage';
 import ExploreAll from './pages/ExploreAll';
 import OfficialLists from './pages/OfficialLists';
+import ProfileDashboard from './pages/ProfileDashboard';
 import './App.css';
 
 function App() {
@@ -205,6 +206,7 @@ function App() {
         <Route path="/preferences" element={<Preferences />} />
         <Route path="/recommendation" element={<Recommendation />} />
         <Route path="/lists" element={<OfficialLists />} />
+        <Route path="/profile" element={<ProfileDashboard user={user} />} />
         <Route
           path="/explore/:section"
           element={

@@ -327,17 +327,41 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
                 )}
 
                 {/* Profile Actions */}
-                <div className="profile-dropdown-actions">
-                  <button
-                    className="profile-action-btn logout-btn"
-                    onClick={() => {
-                      setShowUserDropdown(false);
-                      onLogout();
-                    }}
-                  >
-                    🚪 Sign Out
-                  </button>
-                </div>
+                 <div className="profile-dropdown-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                   <button
+                     className="profile-action-btn"
+                     onClick={() => {
+                       setShowUserDropdown(false);
+                       navigate('/profile');
+                     }}
+                     style={{
+                       background: 'rgba(255,255,255,0.05)',
+                       border: '1px solid rgba(255,255,255,0.1)',
+                       borderRadius: '8px',
+                       padding: '8px 16px',
+                       color: '#fff',
+                       fontSize: '0.82rem',
+                       fontWeight: '600',
+                       cursor: 'pointer',
+                       transition: 'all 0.2s ease',
+                       width: '100%',
+                       textAlign: 'center'
+                     }}
+                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; }}
+                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; }}
+                   >
+                     👤 View Dashboard
+                   </button>
+                   <button
+                     className="profile-action-btn logout-btn"
+                     onClick={() => {
+                       setShowUserDropdown(false);
+                       onLogout();
+                     }}
+                   >
+                     🚪 Sign Out
+                   </button>
+                 </div>
               </div>
             )}
           </div>
