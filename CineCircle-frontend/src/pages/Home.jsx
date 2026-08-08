@@ -13,6 +13,11 @@ import {
   getHindiMovies,
   getGujaratiMovies,
   getMarathiMovies,
+  getTeluguMovies,
+  getTamilMovies,
+  getBengaliMovies,
+  getMalayalamMovies,
+  getGenres,
 } from '../services/api';
 
 function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchParty, safeSearch = true }) {
@@ -26,6 +31,10 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
     hindi: [],
     gujarati: [],
     marathi: [],
+    telugu: [],
+    tamil: [],
+    bengali: [],
+    malayalam: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +42,11 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
     async function fetchAll() {
       try {
         setLoading(true);
-        const [popular, recent, scifi, animation, korean, chinese, hindi, gujarati, marathi] = await Promise.all([
+        const [
+          popular, recent, scifi, animation, korean, chinese,
+          hindi, gujarati, marathi, telugu, tamil, bengali, malayalam,
+          genreData
+        ] = await Promise.all([
           getPopularMovies(),
           getRecentMovies(),
           getSciFiMovies(),
@@ -43,6 +56,11 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
           getHindiMovies(),
           getGujaratiMovies(),
           getMarathiMovies(),
+          getTeluguMovies(),
+          getTamilMovies(),
+          getBengaliMovies(),
+          getMalayalamMovies(),
+          getGenres(),
         ]);
 
         setRows({
@@ -55,6 +73,10 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
           hindi: hindi.results || [],
           gujarati: gujarati.results || [],
           marathi: marathi.results || [],
+          telugu: telugu.results || [],
+          tamil: tamil.results || [],
+          bengali: bengali.results || [],
+          malayalam: malayalam.results || [],
         });
       } catch (err) {
         console.error('Failed to fetch movies:', err);
@@ -80,15 +102,19 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
 
   const filteredRows = useMemo(
     () => ({
-      popular: applyFilters(rows.popular),
-      recent: applyFilters(rows.recent),
-      scifi: applyFilters(rows.scifi),
-      animation: applyFilters(rows.animation),
-      korean: applyFilters(rows.korean),
-      chinese: applyFilters(rows.chinese),
-      hindi: applyFilters(rows.hindi),
-      gujarati: applyFilters(rows.gujarati),
-      marathi: applyFilters(rows.marathi),
+      popular: applyFilters(rows.popular).slice(0, 10),
+      recent: applyFilters(rows.recent).slice(0, 10),
+      scifi: applyFilters(rows.scifi).slice(0, 10),
+      animation: applyFilters(rows.animation).slice(0, 10),
+      korean: applyFilters(rows.korean).slice(0, 10),
+      chinese: applyFilters(rows.chinese).slice(0, 10),
+      hindi: applyFilters(rows.hindi).slice(0, 10),
+      telugu: applyFilters(rows.telugu).slice(0, 10),
+      tamil: applyFilters(rows.tamil).slice(0, 10),
+      bengali: applyFilters(rows.bengali).slice(0, 10),
+      malayalam: applyFilters(rows.malayalam).slice(0, 10),
+      marathi: applyFilters(rows.marathi).slice(0, 10),
+      gujarati: applyFilters(rows.gujarati).slice(0, 10),
     }),
     [rows, safeSearch]
   );
@@ -269,6 +295,42 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
               onToggleWatchlist={onToggleWatchlist}
               isInWatchlist={isInWatchlist}
               section="indian"
+            />
+
+            <MovieRow
+              title="Telugu Cinema & Hits"
+              movies={filteredRows.telugu}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+              section="telugu"
+            />
+
+            <MovieRow
+              title="Tamil Cinema & Hits"
+              movies={filteredRows.tamil}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+              section="tamil"
+            />
+
+            <MovieRow
+              title="Bengali Cinema & Hits"
+              movies={filteredRows.bengali}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+              section="bengali"
+            />
+
+            <MovieRow
+              title="Malayalam Cinema & Hits"
+              movies={filteredRows.malayalam}
+              onPlayTrailer={onPlayTrailer}
+              onToggleWatchlist={onToggleWatchlist}
+              isInWatchlist={isInWatchlist}
+              section="malayalam"
             />
 
             <MovieRow

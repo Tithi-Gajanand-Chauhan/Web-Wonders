@@ -606,7 +606,7 @@ function Recommendation() {
             </h2>
 
             {/* Pairwise Matches Grid */}
-            {compatibilityAnalysis.pairwise && compatibilityAnalysis.pairwise.length > 0 ? (
+            {compatibilityAnalysis && compatibilityAnalysis.pairwise && compatibilityAnalysis.pairwise.length > 0 ? (
               <div style={{ marginBottom: "24px" }}>
                 <h3 style={{ fontSize: "13px", color: "#888", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "14px" }}>
                   Member Pairwise Match Matrix
@@ -708,7 +708,7 @@ function Recommendation() {
                   <span>✓</span> Shared Tastes (Agreements)
                 </h4>
                 <ul style={{ margin: 0, paddingLeft: "18px", color: "#B0B0B0", fontSize: "13px", lineHeight: "1.6" }}>
-                  {compatibilityAnalysis.agreements && compatibilityAnalysis.agreements.map((item, idx) => (
+                  {compatibilityAnalysis?.agreements?.map((item, idx) => (
                     <li key={idx} style={{ marginBottom: "6px" }}>{item}</li>
                   ))}
                 </ul>
@@ -727,7 +727,7 @@ function Recommendation() {
                   <span>⚡</span> Resolved Conflicts (Negotiations)
                 </h4>
                 <ul style={{ margin: 0, paddingLeft: "18px", color: "#B0B0B0", fontSize: "13px", lineHeight: "1.6" }}>
-                  {compatibilityAnalysis.conflicts && compatibilityAnalysis.conflicts.map((item, idx) => (
+                  {compatibilityAnalysis?.conflicts?.map((item, idx) => (
                     <li key={idx} style={{ marginBottom: "6px" }}>{item}</li>
                   ))}
                 </ul>

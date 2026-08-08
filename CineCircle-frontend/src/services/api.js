@@ -4,7 +4,7 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 3000,
+  timeout: 10000,
 });
 
 // Request interceptor to automatically attach authorization headers
@@ -104,9 +104,21 @@ export function getTrailerIframeUrl(movie, { autoplay = 1, mute = 1, loop = 1, c
 export const fetchMovieTrailer = async (movieId) => {
   try {
     const { data } = await api.get(`/movies/${movieId}/videos`);
-    return data?.trailerKey || null;
+    if (data && data.trailerKey) {
+      return data.trailerKey;
+    }
+  } catch (e) {}
+  // Fallback: Pick a consistent trailer from DIVERSE_TRAILERS based on movie ID
+  const index = Math.abs(parseInt(movieId) || 0) % DIVERSE_TRAILERS.length;
+  return DIVERSE_TRAILERS[index];
+};
+
+export const fetchMovieVideos = async (movieId) => {
+  try {
+    const { data } = await api.get(`/movies/${movieId}/videos`);
+    return data || { trailerKey: null, trailers: [] };
   } catch (e) {
-    return null;
+    return { trailerKey: null, trailers: [] };
   }
 };
 
@@ -754,6 +766,38 @@ export const getMarathiMovies = async (page = 1) => {
     if (response.data && response.data.results && response.data.results.length > 0) return response.data;
   } catch (e) {}
   return { results: CURATED_MOVIES.filter(m => m.original_language === 'mr') };
+};
+
+export const getTeluguMovies = async (page = 1) => {
+  try {
+    const response = await api.get('/movies/telugu', { params: { page } });
+    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
+  } catch (e) {}
+  return { results: CURATED_MOVIES.filter(m => m.original_language === 'te') };
+};
+
+export const getTamilMovies = async (page = 1) => {
+  try {
+    const response = await api.get('/movies/tamil', { params: { page } });
+    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
+  } catch (e) {}
+  return { results: CURATED_MOVIES.filter(m => m.original_language === 'ta') };
+};
+
+export const getBengaliMovies = async (page = 1) => {
+  try {
+    const response = await api.get('/movies/bengali', { params: { page } });
+    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
+  } catch (e) {}
+  return { results: CURATED_MOVIES.filter(m => m.original_language === 'bn') };
+};
+
+export const getMalayalamMovies = async (page = 1) => {
+  try {
+    const response = await api.get('/movies/malayalam', { params: { page } });
+    if (response.data && response.data.results && response.data.results.length > 0) return response.data;
+  } catch (e) {}
+  return { results: CURATED_MOVIES.filter(m => m.original_language === 'ml') };
 };
 
 export const getSpanishMovies = async (page = 1) => {

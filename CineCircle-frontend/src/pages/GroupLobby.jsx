@@ -483,6 +483,7 @@ useEffect(() => {
               {groupWatchlist.map((movie) => {
                 const myUsername = activeUser?.username || localUser || "Guest";
                 const isLikedByMe = movie.likes && movie.likes.includes(myUsername);
+                const isAddedByMe = movie.addedBy && movie.addedBy.toLowerCase().trim() === myUsername.toLowerCase().trim();
                 const likesCount = movie.likes ? movie.likes.length : 0;
                 const likesTooltip = movie.likes && movie.likes.length > 0
                   ? `Liked by: ${movie.likes.join(", ")}`

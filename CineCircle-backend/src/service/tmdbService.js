@@ -438,10 +438,10 @@ async function getMovieDetails(movieId) {
 async function getMovieVideos(movieId) {
   try {
     const data = await fetchFromTMDB(`/movie/${movieId}/videos`, {
-      include_video_language: 'en,hi,ta,te,mr,gu,ko,zh,ja,es,fr,de,it,null'
+      include_video_language: 'en,hi,ta,te,mr,gu,ml,bn,ko,zh,ja,es,fr,de,it,null'
     });
     if (!data || !Array.isArray(data.results) || data.results.length === 0) {
-      return { trailerKey: null };
+      return { trailerKey: null, trailers: [] };
     }
 
     // 1. Try finding official YouTube trailers first
@@ -475,10 +475,23 @@ async function getMovieVideos(movieId) {
       selected = data.results.find((v) => v.site === 'YouTube');
     }
 
-    return { trailerKey: selected ? selected.key : null };
+    const trailersList = data.results
+      .filter(v => v.site === 'YouTube')
+      .map(v => ({
+        key: v.key,
+        name: v.name || v.type,
+        language: v.iso_639_1,
+        type: v.type,
+        official: !!v.official
+      }));
+
+    return { 
+      trailerKey: selected ? selected.key : null,
+      trailers: trailersList
+    };
   } catch (err) {
     console.error(`Error in getMovieVideos for ID ${movieId}:`, err.message);
-    return { trailerKey: null };
+    return { trailerKey: null, trailers: [] };
   }
 }
 
@@ -535,6 +548,46 @@ async function getMarathiMovies(page = 1) {
   return fetchFromTMDB('/discover/movie', {
     page,
     with_original_language: 'mr',
+    sort_by: 'popularity.desc',
+    'vote_count.gte': 1,
+    include_adult: false,
+  });
+}
+
+async function getTeluguMovies(page = 1) {
+  return fetchFromTMDB('/discover/movie', {
+    page,
+    with_original_language: 'te',
+    sort_by: 'popularity.desc',
+    'vote_count.gte': 1,
+    include_adult: false,
+  });
+}
+
+async function getTamilMovies(page = 1) {
+  return fetchFromTMDB('/discover/movie', {
+    page,
+    with_original_language: 'ta',
+    sort_by: 'popularity.desc',
+    'vote_count.gte': 1,
+    include_adult: false,
+  });
+}
+
+async function getBengaliMovies(page = 1) {
+  return fetchFromTMDB('/discover/movie', {
+    page,
+    with_original_language: 'bn',
+    sort_by: 'popularity.desc',
+    'vote_count.gte': 1,
+    include_adult: false,
+  });
+}
+
+async function getMalayalamMovies(page = 1) {
+  return fetchFromTMDB('/discover/movie', {
+    page,
+    with_original_language: 'ml',
     sort_by: 'popularity.desc',
     'vote_count.gte': 1,
     include_adult: false,
@@ -2434,6 +2487,10 @@ module.exports = {
   getHindiMovies,
   getGujaratiMovies,
   getMarathiMovies,
+  getTeluguMovies,
+  getTamilMovies,
+  getBengaliMovies,
+  getMalayalamMovies,
   getSciFiMovies,
   getAnimationMovies,
   getGenres,

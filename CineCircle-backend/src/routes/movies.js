@@ -128,6 +128,54 @@ router.get('/marathi', async (req, res) => {
   }
 });
 
+// GET /api/movies/telugu
+router.get('/telugu', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const data = await tmdbService.getTeluguMovies(page);
+    res.json(data);
+  } catch (err) {
+    console.error('Error fetching Telugu movies:', err.message);
+    res.status(500).json({ error: 'Failed to fetch Telugu movies' });
+  }
+});
+
+// GET /api/movies/tamil
+router.get('/tamil', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const data = await tmdbService.getTamilMovies(page);
+    res.json(data);
+  } catch (err) {
+    console.error('Error fetching Tamil movies:', err.message);
+    res.status(500).json({ error: 'Failed to fetch Tamil movies' });
+  }
+});
+
+// GET /api/movies/bengali
+router.get('/bengali', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const data = await tmdbService.getBengaliMovies(page);
+    res.json(data);
+  } catch (err) {
+    console.error('Error fetching Bengali movies:', err.message);
+    res.status(500).json({ error: 'Failed to fetch Bengali movies' });
+  }
+});
+
+// GET /api/movies/malayalam
+router.get('/malayalam', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const data = await tmdbService.getMalayalamMovies(page);
+    res.json(data);
+  } catch (err) {
+    console.error('Error fetching Malayalam movies:', err.message);
+    res.status(500).json({ error: 'Failed to fetch Malayalam movies' });
+  }
+});
+
 // GET /api/movies/scifi
 router.get('/scifi', async (req, res) => {
   try {

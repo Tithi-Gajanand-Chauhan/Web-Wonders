@@ -19,6 +19,10 @@ import {
   getAwardMovies,
   getGujaratiMovies,
   getMarathiMovies,
+  getTeluguMovies,
+  getTamilMovies,
+  getBengaliMovies,
+  getMalayalamMovies,
   getMoviesByList,
 } from '../services/api';
 
@@ -39,6 +43,10 @@ const SECTION_CONFIG = {
   indian:    { title: '🎊 Indian Cinema & Blockbusters',      fetcher: getIndianMovies },
   gujarati:  { title: '🏮 Gujarati Cinema & Hits',            fetcher: getGujaratiMovies },
   marathi:   { title: '🎭 Marathi Cinema & Hits',             fetcher: getMarathiMovies },
+  telugu:    { title: '🎊 Telugu Cinema & Hits',              fetcher: getTeluguMovies },
+  tamil:     { title: '🎬 Tamil Cinema & Hits',               fetcher: getTamilMovies },
+  bengali:   { title: '🎭 Bengali Cinema & Hits',             fetcher: getBengaliMovies },
+  malayalam: { title: '🌴 Malayalam Cinema & Hits',           fetcher: getMalayalamMovies },
   spanish:   { title: '🌮 Spanish & Latino Cinema',           fetcher: getSpanishMovies },
   animation: { title: '🎨 Cartoons & Animated Hits',          fetcher: getAnimationMovies },
   filtered:  { title: '🔎 Filtered Results',                  fetcher: null },

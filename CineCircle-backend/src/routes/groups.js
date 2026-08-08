@@ -96,11 +96,9 @@ router.post("/join", async (req, res) => {
     }
 
     const uClean = username.toLowerCase().trim();
-    if (group.leftMembers && group.leftMembers.includes(uClean)) {
-      return res.status(400).json({
-        success: false,
-        message: "You have left this room and cannot rejoin."
-      });
+    const wasMemberWhoLeft = group.leftMembers && group.leftMembers.includes(uClean);
+    if (group.leftMembers) {
+      group.leftMembers = group.leftMembers.filter(m => m.toLowerCase().trim() !== uClean);
     }
 
     // Handle mid-session guest to registered user migration
@@ -146,35 +144,9 @@ router.post("/join", async (req, res) => {
       m => m.toLowerCase().trim() === username.toLowerCase().trim()
     );
 
-    if (isAlreadyMember && !migrated) {
-      let isSameRegisteredUser = false;
-      if (userId) {
-        let regUser = null;
-        if (isMongoActive()) {
-          try {
-            regUser = await User.findById(userId);
-          } catch (e) {
-            console.error("User query error in join bypass:", e);
-          }
-        } else {
-          const users = readJSONUsers();
-          regUser = users[userId];
-        }
 
-        if (regUser && regUser.username.toLowerCase().trim() === username.toLowerCase().trim()) {
-          isSameRegisteredUser = true;
-        }
-      }
 
-      if (!isSameRegisteredUser) {
-        return res.status(400).json({
-          success: false,
-          message: "This user has already joined the room."
-        });
-      }
-    }
-
-    if (group.locked) {
+    if (group.locked && !isAlreadyMember && !wasMemberWhoLeft) {
       return res.status(400).json({
         success: false,
         message: "This group has already started recommendations."
