@@ -78,6 +78,12 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
           >
             Movies
           </button>
+          <button
+            className={`nav-link-pill ${location.pathname === '/lists' ? 'active' : ''}`}
+            onClick={() => navigate('/lists')}
+          >
+            Explore Lists
+          </button>
           <button className="nav-link-pill" onClick={onOpenWatchlist}>
             My List {watchlistCount > 0 && `(${watchlistCount})`}
           </button>

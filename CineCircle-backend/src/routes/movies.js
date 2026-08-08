@@ -201,4 +201,17 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// GET /api/movies/list/:listId
+router.get('/list/:listId', async (req, res) => {
+  try {
+    const { listId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const data = await tmdbService.getMoviesByListId(listId, page);
+    res.json(data);
+  } catch (err) {
+    console.error(`Error fetching list ${req.params.listId}:`, err.message);
+    res.status(500).json({ error: 'Failed to fetch list movies' });
+  }
+});
+
 module.exports = router;

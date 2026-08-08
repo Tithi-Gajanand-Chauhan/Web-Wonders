@@ -16,6 +16,7 @@ import Recommendation from './pages/Recommendation';
 import AuthModal from './components/AuthModal';
 import IntroPage from './pages/IntroPage';
 import ExploreAll from './pages/ExploreAll';
+import OfficialLists from './pages/OfficialLists';
 import './App.css';
 
 function App() {
@@ -198,6 +199,7 @@ function App() {
         <Route path="/lobby" element={<GroupLobby />} />
         <Route path="/preferences" element={<Preferences />} />
         <Route path="/recommendation" element={<Recommendation />} />
+        <Route path="/lists" element={<OfficialLists />} />
         <Route
           path="/explore/:section"
           element={

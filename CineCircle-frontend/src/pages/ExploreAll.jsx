@@ -19,6 +19,7 @@ import {
   getAwardMovies,
   getGujaratiMovies,
   getMarathiMovies,
+  getMoviesByList,
 } from '../services/api';
 
 /** Maps section key → { title, fetcher } */
@@ -41,6 +42,34 @@ const SECTION_CONFIG = {
   spanish:   { title: '🌮 Spanish & Latino Cinema',           fetcher: getSpanishMovies },
   animation: { title: '🎨 Cartoons & Animated Hits',          fetcher: getAnimationMovies },
   filtered:  { title: '🔎 Filtered Results',                  fetcher: null },
+  
+  // Official Lists
+  'decade-1970s': { title: '📅 Top 250 Films of the 1970s', fetcher: (page) => getMoviesByList('decade-1970s', page) },
+  'decade-1980s': { title: '📅 Top 250 Films of the 1980s', fetcher: (page) => getMoviesByList('decade-1980s', page) },
+  'decade-1990s': { title: '📅 Top 250 Films of the 1990s', fetcher: (page) => getMoviesByList('decade-1990s', page) },
+  'decade-2000s': { title: '📅 Top 250 Films of the 2000s', fetcher: (page) => getMoviesByList('decade-2000s', page) },
+  'decade-2010s': { title: '📅 Top 250 Films of the 2010s', fetcher: (page) => getMoviesByList('decade-2010s', page) },
+  'decade-2020s': { title: '📅 Top 250 Films of the 2020s', fetcher: (page) => getMoviesByList('decade-2020s', page) },
+  
+  'director-women': { title: '🎬 Top Films by Women Directors', fetcher: (page) => getMoviesByList('director-women', page) },
+  'director-black': { title: '🎬 Top Films by Black Directors', fetcher: (page) => getMoviesByList('director-black', page) },
+  'director-queer': { title: '🎬 Top Films by Queer Directors', fetcher: (page) => getMoviesByList('director-queer', page) },
+  
+  'format-documentaries': { title: '📹 Top Documentaries', fetcher: (page) => getMoviesByList('format-documentaries', page) },
+  'format-animated':      { title: '🎨 Top Animated Films', fetcher: (page) => getMoviesByList('format-animated', page) },
+  'format-shorts':        { title: '⏱️ Top Short Films', fetcher: (page) => getMoviesByList('format-shorts', page) },
+  'format-miniseries':    { title: '📺 Top Miniseries', fetcher: (page) => getMoviesByList('format-miniseries', page) },
+  
+  'subgenre-romcom':  { title: '💞 Romantic Comedies', fetcher: (page) => getMoviesByList('subgenre-romcom', page) },
+  'subgenre-samurai': { title: '⚔️ Samurai Films', fetcher: (page) => getMoviesByList('subgenre-samurai', page) },
+  'subgenre-spy':     { title: '🕵️ Spy Films', fetcher: (page) => getMoviesByList('subgenre-spy', page) },
+  'subgenre-wuxia':    { title: '☯️ Wuxia Films', fetcher: (page) => getMoviesByList('subgenre-wuxia', page) },
+  
+  'region-indian':   { title: '🇮🇳 Top 100 Indian Films', fetcher: (page) => getMoviesByList('region-indian', page) },
+  'region-japanese': { title: '🇯🇵 Japanese Masterpieces', fetcher: (page) => getMoviesByList('region-japanese', page) },
+  'region-latin':    { title: '💃 Latin American Cinema', fetcher: (page) => getMoviesByList('region-latin', page) },
+  
+  'popularity-mostfans': { title: '❤️ Top Films with the Most Fans', fetcher: (page) => getMoviesByList('popularity-mostfans', page) },
 };
 
 const MAX_PAGES = 10; // TMDB caps useful pages at ~500 but we'll limit to 10

@@ -701,4 +701,35 @@ export const getSpanishMovies = async (page = 1) => {
   return { results: CURATED_MOVIES.filter(m => m.original_language === 'es') };
 };
 
+export const getMoviesByList = async (listId, page = 1) => {
+  try {
+    const response = await api.get(`/movies/list/${listId}`, { params: { page } });
+    if (response.data && response.data.results) return response.data;
+  } catch (e) {
+    console.error('getMoviesByList error:', e);
+  }
+
+  // Frontend local fallback logic for offline support
+  let results = [...CURATED_MOVIES];
+  if (listId.startsWith('decade-')) {
+    const dec = listId.split('-')[1]; // e.g. "1990s"
+    const decadeStart = parseInt(dec);
+    results = results.filter(m => {
+      const year = parseInt(m.release_date?.split('-')[0]);
+      return year >= decadeStart && year <= decadeStart + 9;
+    });
+  } else if (listId === 'director-women') {
+    results = results.filter(m => m.id === 1022789 || m.id === 508947 || m.id === 129);
+  } else if (listId === 'format-animated') {
+    results = results.filter(m => m.genre_ids?.includes(16));
+  } else if (listId === 'region-indian') {
+    results = results.filter(m => ['hi', 'te', 'mr', 'gu', 'ta'].includes(m.original_language));
+  } else if (listId === 'region-japanese') {
+    results = results.filter(m => m.original_language === 'ja');
+  } else if (listId === 'popularity-mostfans') {
+    results = results.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+  }
+  return { results };
+};
+
 export default api;
