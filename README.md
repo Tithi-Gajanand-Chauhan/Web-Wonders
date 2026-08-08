@@ -1,37 +1,55 @@
 # Web Wonders 2026 - CineCircle 🎬
 
 ## 📖 About the Project
-Developed as part of **Web Wonders 2026** under the **Media & Entertainment** theme, **CineCircle** is an AI-powered entertainment discovery and collaborative movie selection platform. 
 
-Instead of showing generic trending content, CineCircle focuses on personalized and group-based discovery to solve the problem of decision fatigue:
-* **For the individual**: CineCircle offers a cinematic space where users can explore curated categories, search and sort watchlist collections, track screens watch time, and get detailed analytics on their favorite film genres. In addition, an individual can create a watch party solo to generate AI-powered recommendations tailored strictly to their own mood, language, and genre preferences.
-* **For groups of friends and family**: CineCircle allows users to create virtual **Watch Parties**. Group members enter their genre, language, and current mood preferences. The platform uses a compatibility algorithm based on preference overlap to generate group recommendations. Members can then vote in real-time to decide what to watch.
+CineCircle is a premium AI-powered entertainment discovery platform that blends intelligent discovery with secure, real-time social interaction to make deciding what to watch fun, effortless, and safe. Developed under the **Media & Entertainment** theme for **Web Wonders 2026**, the platform curates personalized recommendations using advanced Gemini AI models.
 
----
-
-## 🚀 Key Features
-
-* 🎥 **Curated Cinematic Catalog**: Discover movies organized by decades, underrepresented directors spotlight, global categories (Hollywood, Indian, Korean, Japanese), and regional Indian cinema (Marathi, Gujarati).
-* 👥 **Group & Individual Watch Lobbies**: Create watchrooms solo or join rooms via unique group codes to sync preferences with friends and family.
-* ⚖️ **Compatibility Index Algorithm**: Calculates group compatibility scores (using Jaccard similarity metrics) based on preference agreement before recommending movies.
-* 🗳️ **Group Voting System**: Live voting on generated recommendations to choose the winning movie.
-* 😊 **Mood-Based Discovery**: Choose current moods (e.g. **Happy, Relaxed, Excited, Emotional, Sad**) to dynamically shape recommendations.
-* 🛡️ **Safe Search Toggle**: Navbar switch to instantly filter out adult/NC-17 titles.
-* 📊 **Personal Analytics Dashboard**: Track watched films count, liked movies, estimated cumulative screen-time, and get a Top 5 favorite genres distribution progress bar.
-* ⭐ **Library & Watchlist Management**: Tabbed library drawer for watchlists, watched, and liked checklists, with title-based searching and sorting.
+Beyond standard individual suggestions, it introduces real-time Watch Parties—dynamic lobby rooms where friends and family can vote on movie selections, like entries with live-attributed likes and automatically find the ultimate compromise choice. Backed by robust security rules, including strict single-device login enforcement, owner-restricted watchlist deletes, and room-leaving exit permanence.
 
 ---
 
-## 🛠️ Technology Stack
+## Key Features
 
-* **Frontend**: React.js (Vite), React Router DOM, Vanilla CSS (Glassmorphism & animations)
-* **Backend**: Node.js + Express.js
-* **Database**: MongoDB (Mongoose) + Local JSON fallbacks for offline development
-* **APIs**: TMDB API, Gemini API
+* Personal User Profiles: Integrated portals for custom lists, user ratings, reviews, and personal watchlists.
+* AI-Driven Content Curation: Personalized movie, TV, and mood-based suggestions.
+* Real-Time Watch Parties: Dynamic group lobby rooms that analyze members' preferences to find the perfect movie compromise.
+* Attributed Social Watchlists: Live synced group watchlists featuring contributor tags and interactive heart reactions.
+* Secure Device Enforcement: Smart session restrictions for device login.
+
+---
+
+## Technology Stack
+
+### Frontend
+
+* React.js (Vite)
+* React Router DOM (v7)
+* Axios (HTTP Client)
+* Custom Vanilla CSS
+
+### Backend
+
+* Node.js & Express.js
+* JSON Web Tokens (JWT) & BcryptJS (Security)
+
+### Database
+
+* MongoDB (Mongoose ODM)
+* Local JSON Database (Fallback offline storage)
+
+### APIs & AI
+
+* TMDB API (Movie Discovery)
+* Gemini AI API (Google Generative AI SDK)
+
+### Version Control
+
+* Git & GitHub
 
 ---
 
 ## 👥 Team Members & Modules
+
 * **Gayathri** - Authentication Module
 * **Mahathi** - Content Discovery Module
 * **Hiya Patel** - Reviews & Watchlist Module
@@ -80,3 +98,10 @@ Instead of showing generic trending content, CineCircle focuses on personalized 
    npm run dev
    ```
    Open your browser to `http://localhost:5173`.
+
+---
+
+## Competition
+
+**Web Wonders 2026**
+Theme: Media & Entertainment

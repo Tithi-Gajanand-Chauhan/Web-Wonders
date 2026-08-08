@@ -16,7 +16,8 @@ const GroupSchema = new mongoose.Schema({
   generating: { type: Boolean, default: false },
   recommendations: { type: Object, default: null },
   recommendationHistory: [{ type: Object }],
-  watchlist: { type: Array, default: [] }
+  watchlist: { type: Array, default: [] },
+  leftMembers: [{ type: String }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Group', GroupSchema);

@@ -123,7 +123,12 @@ function Recommendation() {
             fetch("http://localhost:5000/api/groups/join", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ code: groupCode, username: parsed.username, oldUsername: localUser })
+              body: JSON.stringify({ 
+                code: groupCode, 
+                username: parsed.username, 
+                oldUsername: localUser,
+                userId: parsed.id || parsed._id
+              })
             }).catch(err => console.error("Auto-join mid-session failed:", err));
           }
         }
@@ -267,6 +272,7 @@ function Recommendation() {
         if (response.ok) {
           const data = await response.json();
           if (data.votes) setVoteCounts(data.votes);
+          if (data.watchlist) setGroupWatchlist(data.watchlist);
         }
       } catch (error) {
         console.error("Error polling votes:", error);
@@ -496,6 +502,62 @@ function Recommendation() {
                 }}
               >
                 {copied ? "✓ Copied!" : "📋 Share"}
+              </button>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const myUsername = activeUser?.username || localUser || "Guest";
+                    await fetch(`http://localhost:5000/api/groups/${groupCode}/leave`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ username: myUsername })
+                    });
+
+                    // Clear history
+                    const guestKey = 'cinecircle_recent_rooms_guest';
+                    const guestRooms = JSON.parse(localStorage.getItem(guestKey) || '[]');
+                    localStorage.setItem(guestKey, JSON.stringify(guestRooms.filter(r => r.code !== groupCode)));
+
+                    const guestJoinedKey = 'cinecircle_joined_rooms_guest';
+                    const guestJoinedRooms = JSON.parse(localStorage.getItem(guestJoinedKey) || '[]');
+                    localStorage.setItem(guestJoinedKey, JSON.stringify(guestJoinedRooms.filter(r => r.code !== groupCode)));
+
+                    const savedUser = localStorage.getItem('cinecircle_user');
+                    if (savedUser) {
+                      const u = JSON.parse(savedUser);
+                      const userId = u.id || u._id;
+                      
+                      const keyNavbar = `cinecircle_saved_rooms_${userId}`;
+                      const existingNavbar = JSON.parse(localStorage.getItem(keyNavbar) || '[]');
+                      localStorage.setItem(keyNavbar, JSON.stringify(existingNavbar.filter(r => r.code !== groupCode)));
+
+                      const keyModal = `cinecircle_recent_rooms_${userId}`;
+                      const existingModal = JSON.parse(localStorage.getItem(keyModal) || '[]');
+                      localStorage.setItem(keyModal, JSON.stringify(existingModal.filter(r => r.code !== groupCode)));
+
+                      const keyJoined = `cinecircle_joined_rooms_${userId}`;
+                      const existingJoined = JSON.parse(localStorage.getItem(keyJoined) || '[]');
+                      localStorage.setItem(keyJoined, JSON.stringify(existingJoined.filter(r => r.code !== groupCode)));
+                    }
+                  } catch (e) {
+                    console.error("Leave room error:", e);
+                  }
+                  navigate("/");
+                }}
+                style={{
+                  padding: "8px 14px",
+                  backgroundColor: "transparent",
+                  color: "#EF4444",
+                  border: "1px solid rgba(239, 68, 68, 0.4)",
+                  borderRadius: "20px",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                🚪 Leave Room
               </button>
             </div>
           </div>
@@ -793,56 +855,120 @@ function Recommendation() {
               <span>🍿</span> Shared Room Watchlist ({groupWatchlist.length})
             </h3>
             <div style={{ display: "flex", gap: "16px", overflowX: "auto", paddingBottom: "10px", scrollbarWidth: "thin" }}>
-              {groupWatchlist.map((m) => (
-                <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", flexShrink: 0, width: "86px", textAlign: "center" }}>
-                  <div style={{ position: "relative", width: "76px", height: "110px" }}>
-                    <img
-                      src={m.poster_path ? (m.poster_path.startsWith('/') ? `https://image.tmdb.org/t/p/w92${m.poster_path}` : m.poster_path) : 'https://via.placeholder.com/92x138'}
-                      alt={m.title}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px", border: "1px solid #333" }}
-                    />
+              {groupWatchlist.map((m) => {
+                const myUsername = activeUser?.username || localUser || "Guest";
+                const isLikedByMe = m.likes && m.likes.includes(myUsername);
+                const likesCount = m.likes ? m.likes.length : 0;
+                const likesTooltip = m.likes && m.likes.length > 0
+                  ? `Liked by: ${m.likes.join(", ")}`
+                  : "Like this movie";
+
+                const isAddedByMe = m.addedBy && m.addedBy.toLowerCase().trim() === myUsername.toLowerCase().trim();
+
+                return (
+                  <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", flexShrink: 0, width: "86px", textAlign: "center" }}>
+                    <div style={{ position: "relative", width: "76px", height: "110px" }}>
+                      <img
+                        src={m.poster_path ? (m.poster_path.startsWith('/') ? `https://image.tmdb.org/t/p/w92${m.poster_path}` : m.poster_path) : 'https://via.placeholder.com/92x138'}
+                        alt={m.title}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px", border: "1px solid #333" }}
+                      />
+                      {isAddedByMe && (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              await fetch(`http://localhost:5000/api/groups/${groupCode}/watchlist/remove`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ movieId: m.id, username: myUsername })
+                              });
+                              setGroupWatchlist(prev => prev.filter(item => item.id !== m.id));
+                            } catch (err) {
+                              console.error("Remove error:", err);
+                            }
+                          }}
+                          style={{
+                            position: "absolute",
+                            top: "-6px",
+                            right: "-6px",
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "50%",
+                            backgroundColor: "#EF4444",
+                            color: "#FFF",
+                            border: "none",
+                            fontSize: "9px",
+                            fontWeight: "900",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.5)"
+                          }}
+                          title="Remove"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                    
+                    <span 
+                      style={{ fontSize: "11px", color: "#EEE", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}
+                      title={m.title}
+                    >
+                      {m.title}
+                    </span>
+
+                    {m.addedBy && (
+                      <span 
+                        style={{ fontSize: "9px", color: "#888", fontWeight: "500", fontStyle: "italic", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}
+                        title={`Added by ${m.addedBy}`}
+                      >
+                        by {m.addedBy}
+                      </span>
+                    )}
+
                     <button
                       onClick={async (e) => {
                         e.stopPropagation();
                         try {
-                          await fetch(`http://localhost:5000/api/groups/${groupCode}/watchlist/remove`, {
+                          const res = await fetch(`http://localhost:5000/api/groups/${groupCode}/watchlist/${m.id}/like`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ movieId: m.id })
+                            body: JSON.stringify({ username: myUsername })
                           });
-                          setGroupWatchlist(prev => prev.filter(item => item.id !== m.id));
+                          const data = await res.json();
+                          if (data.success) {
+                            setGroupWatchlist(data.watchlist);
+                          }
                         } catch (err) {
-                          console.error("Remove error:", err);
+                          console.error("Like toggle error:", err);
                         }
                       }}
                       style={{
-                        position: "absolute",
-                        top: "-6px",
-                        right: "-6px",
-                        width: "18px",
-                        height: "18px",
-                        borderRadius: "50%",
-                        backgroundColor: "#EF4444",
-                        color: "#FFF",
-                        border: "none",
+                        background: isLikedByMe ? "rgba(229, 9, 20, 0.15)" : "rgba(255,255,255,0.05)",
+                        border: isLikedByMe ? "1px solid #E50914" : "1px solid rgba(255,255,255,0.1)",
+                        borderRadius: "12px",
+                        padding: "2px 8px",
+                        color: isLikedByMe ? "#E50914" : "#AAA",
                         fontSize: "9px",
-                        fontWeight: "900",
+                        fontWeight: "700",
+                        cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.5)"
+                        gap: "4px",
+                        marginTop: "2px",
+                        transition: "all 0.15s ease"
                       }}
-                      title="Remove"
+                      title={likesTooltip}
                     >
-                      ✕
+                      <span>{isLikedByMe ? "❤️" : "🤍"}</span>
+                      <span>{likesCount}</span>
                     </button>
                   </div>
-                  <span style={{ fontSize: "11px", color: "#EEE", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>
-                    {m.title}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1075,19 +1201,25 @@ function Recommendation() {
                     <button
                       onClick={async () => {
                         try {
+                          const username = activeUser?.username || localUser || "Guest";
                           const movieObj = {
                             id: movie.movieId || movie.id,
                             title: movie.title,
                             poster_path: movie.poster || movie.poster_path,
                             vote_average: Number(movie.rating) || 7.5,
                             release_date: movie.releaseDate || movie.year || "2026",
-                            overview: movie.overview || ""
+                            overview: movie.overview || "",
+                            addedBy: username,
+                            likes: []
                           };
 
                           const res = await fetch(`http://localhost:5000/api/groups/${groupCode}/watchlist/add`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ movie: movieObj })
+                            body: JSON.stringify({ 
+                              movie: movieObj,
+                              addedBy: username
+                            })
                           });
                           const data = await res.json();
                           if (data.success) {

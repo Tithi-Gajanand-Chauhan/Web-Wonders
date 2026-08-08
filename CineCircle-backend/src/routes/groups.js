@@ -1,5 +1,26 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
+const fs = require("fs");
+const path = require("path");
+const User = require("../models/User");
+
+const USERS_FILE = path.join(__dirname, "../../data/users.json");
+
+function isMongoActive() {
+  return mongoose.connection.readyState === 1;
+}
+
+function readJSONUsers() {
+  try {
+    if (!fs.existsSync(USERS_FILE)) return {};
+    const data = fs.readFileSync(USERS_FILE, 'utf8');
+    return JSON.parse(data || '{}');
+  } catch (err) {
+    console.error('Error reading users database:', err);
+    return {};
+  }
+}
 
 const { getGroupRecommendations } = require("../service/recommendationService");
 const db = require("../service/dbService");
@@ -56,7 +77,7 @@ router.post("/create", async (req, res) => {
 
 // Join Group
 router.post("/join", async (req, res) => {
-  const { code, username, oldUsername } = req.body;
+  const { code, username, oldUsername, userId } = req.body;
 
   if (!code || !username) {
     return res.status(400).json({
@@ -74,7 +95,16 @@ router.post("/join", async (req, res) => {
       });
     }
 
+    const uClean = username.toLowerCase().trim();
+    if (group.leftMembers && group.leftMembers.includes(uClean)) {
+      return res.status(400).json({
+        success: false,
+        message: "You have left this room and cannot rejoin."
+      });
+    }
+
     // Handle mid-session guest to registered user migration
+    let migrated = false;
     if (oldUsername && oldUsername.toLowerCase().trim() !== username.toLowerCase().trim()) {
       const oldIdx = group.members.findIndex(
         m => m.toLowerCase().trim() === oldUsername.toLowerCase().trim()
@@ -108,6 +138,7 @@ router.post("/join", async (req, res) => {
         }
 
         await db.saveGroup(code, group);
+        migrated = true;
       }
     }
 
@@ -115,7 +146,35 @@ router.post("/join", async (req, res) => {
       m => m.toLowerCase().trim() === username.toLowerCase().trim()
     );
 
-    if (group.locked && !isAlreadyMember) {
+    if (isAlreadyMember && !migrated) {
+      let isSameRegisteredUser = false;
+      if (userId) {
+        let regUser = null;
+        if (isMongoActive()) {
+          try {
+            regUser = await User.findById(userId);
+          } catch (e) {
+            console.error("User query error in join bypass:", e);
+          }
+        } else {
+          const users = readJSONUsers();
+          regUser = users[userId];
+        }
+
+        if (regUser && regUser.username.toLowerCase().trim() === username.toLowerCase().trim()) {
+          isSameRegisteredUser = true;
+        }
+      }
+
+      if (!isSameRegisteredUser) {
+        return res.status(400).json({
+          success: false,
+          message: "This user has already joined the room."
+        });
+      }
+    }
+
+    if (group.locked) {
       return res.status(400).json({
         success: false,
         message: "This group has already started recommendations."
@@ -490,7 +549,8 @@ router.get("/votes/:groupCode", async (req, res) => {
           id,
           data?.users?.length || 0
         ])
-      )
+      ),
+      watchlist: group.watchlist || []
     });
   } catch (error) {
     console.error("Get votes error:", error);
@@ -517,7 +577,7 @@ router.get("/group/:groupCode", async (req, res) => {
 
 // Add movie to group's shared watchlist
 router.post("/:code/watchlist/add", async (req, res) => {
-  const { movie } = req.body;
+  const { movie, addedBy } = req.body;
   const { code } = req.params;
 
   if (!movie || !movie.id) {
@@ -537,7 +597,12 @@ router.post("/:code/watchlist/add", async (req, res) => {
     // Check duplicate
     const exists = group.watchlist.some(m => m.id === movie.id);
     if (!exists) {
-      group.watchlist.push(movie);
+      const movieToPush = {
+        ...movie,
+        addedBy: addedBy || "Unknown",
+        likes: []
+      };
+      group.watchlist.push(movieToPush);
       await db.saveGroup(code, group);
     }
 
@@ -550,11 +615,11 @@ router.post("/:code/watchlist/add", async (req, res) => {
 
 // Remove movie from group's shared watchlist
 router.post("/:code/watchlist/remove", async (req, res) => {
-  const { movieId } = req.body;
+  const { movieId, username } = req.body;
   const { code } = req.params;
 
-  if (!movieId) {
-    return res.status(400).json({ success: false, error: "Missing movieId" });
+  if (!movieId || !username) {
+    return res.status(400).json({ success: false, error: "Missing details" });
   }
 
   try {
@@ -564,13 +629,121 @@ router.post("/:code/watchlist/remove", async (req, res) => {
     }
 
     if (group.watchlist) {
-      group.watchlist = group.watchlist.filter(m => m.id !== Number(movieId));
-      await db.saveGroup(code, group);
+      const movie = group.watchlist.find(m => m.id === Number(movieId));
+      if (movie) {
+        if (movie.addedBy && movie.addedBy.toLowerCase().trim() !== username.toLowerCase().trim()) {
+          return res.status(403).json({ success: false, error: "You can only remove movies that you added." });
+        }
+        group.watchlist = group.watchlist.filter(m => m.id !== Number(movieId));
+        await db.saveGroup(code, group);
+      }
     }
 
     res.json({ success: true, watchlist: group.watchlist || [] });
   } catch (error) {
     console.error("Remove from group watchlist error:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+// Leave Group
+router.post("/:code/leave", async (req, res) => {
+  const { username } = req.body;
+  const { code } = req.params;
+
+  if (!username) {
+    return res.status(400).json({ success: false, error: "Missing username" });
+  }
+
+  try {
+    const group = await db.getGroup(code);
+    if (!group) {
+      return res.status(404).json({ success: false, error: "Group not found" });
+    }
+
+    if (!group.leftMembers) {
+      group.leftMembers = [];
+    }
+
+    const uClean = username.toLowerCase().trim();
+    if (!group.leftMembers.includes(uClean)) {
+      group.leftMembers.push(uClean);
+    }
+
+    if (group.members) {
+      group.members = group.members.filter(
+        m => m.toLowerCase().trim() !== uClean
+      );
+      
+      // Clean up their preferences
+      if (group.preferences) {
+        group.preferences = group.preferences.filter(
+          p => p.user.toLowerCase().trim() !== uClean
+        );
+      }
+      
+      // Clean up their votes
+      if (group.votes) {
+        Object.keys(group.votes).forEach(movieId => {
+          const voteObj = group.votes[movieId];
+          if (voteObj && voteObj.users) {
+            voteObj.users = voteObj.users.filter(
+              u => u.toLowerCase().trim() !== uClean
+            );
+          }
+        });
+      }
+
+      await db.saveGroup(code, group);
+    }
+
+    res.json({ success: true, members: group.members });
+  } catch (error) {
+    console.error("Leave group error:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+// Toggle like on movie in group's shared watchlist
+router.post("/:code/watchlist/:movieId/like", async (req, res) => {
+  const { code, movieId } = req.params;
+  const { username } = req.body;
+
+  if (!username) {
+    return res.status(400).json({ success: false, error: "Missing username" });
+  }
+
+  try {
+    const group = await db.getGroup(code);
+    if (!group) {
+      return res.status(404).json({ success: false, error: "Group not found" });
+    }
+
+    if (group.watchlist) {
+      const movieIndex = group.watchlist.findIndex(m => m.id === Number(movieId));
+      if (movieIndex !== -1) {
+        const movie = group.watchlist[movieIndex];
+        if (!movie.likes) {
+          movie.likes = [];
+        }
+        
+        const likeIndex = movie.likes.indexOf(username);
+        if (likeIndex !== -1) {
+          // Unlike
+          movie.likes.splice(likeIndex, 1);
+        } else {
+          // Like
+          movie.likes.push(username);
+        }
+        
+        group.watchlist[movieIndex] = { ...movie };
+        await db.saveGroup(code, group);
+      }
+    }
+
+    res.json({ success: true, watchlist: group.watchlist || [] });
+  } catch (error) {
+    console.error("Toggle watchlist movie like error:", error);
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 });

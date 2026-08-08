@@ -11,52 +11,6 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
   const navigate = useNavigate();
   const location = useLocation();
   const searchRef = useRef(null);
-  const [recentRooms, setRecentRooms] = useState([]);
-
-  useEffect(() => {
-    if (user) {
-      try {
-        const userId = user.id || user._id;
-        const key = `cinecircle_saved_rooms_${userId}`;
-        const saved = localStorage.getItem(key);
-        setRecentRooms(saved ? JSON.parse(saved) : []);
-      } catch (e) {
-        setRecentRooms([]);
-      }
-    } else {
-      setRecentRooms([]);
-    }
-  }, [user, showUserDropdown]);
-
-  const handleReenterRoom = async (code, name, username) => {
-    setShowUserDropdown(false);
-    const rejoinName = user ? user.username : (username || 'Guest');
-    const oldUsername = (user && username && username !== user.username) ? username : undefined;
-    try {
-      const response = await fetch("http://localhost:5000/api/groups/join", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, username: rejoinName, oldUsername })
-      });
-      const data = await response.json();
-      if (response.ok && data.success) {
-        navigate("/lobby", {
-          state: {
-            groupName: data.group.groupName || name,
-            groupCode: data.group.code,
-            currentUser: rejoinName,
-            members: data.group.members || [],
-          }
-        });
-      } else {
-        alert(data.message || "Failed to rejoin room.");
-      }
-    } catch (e) {
-      console.error("Rejoin error:", e);
-      alert("Server connection error.");
-    }
-  };
-
 
   useEffect(() => {
     if (!query.trim()) {
@@ -162,7 +116,7 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
             </svg>
             <input
               type="text"
-              placeholder="Search titles, actors..."
+              placeholder="Search titles..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => query.trim() && setShowDropdown(true)}
@@ -227,12 +181,6 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
           )}
         </form>
 
-        {/* Clean Icon Buttons: Watchlist & Profile */}
-        <button className="nav-icon-btn" onClick={onOpenWatchlist} title="My List">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-          </svg>
-        </button>
 
         {user ? (
           <div style={{ position: 'relative' }}>
@@ -270,61 +218,7 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
                   </div>
                 </div>
 
-                {/* Recent Watch Parties Section */}
-                {recentRooms.length > 0 && (
-                  <div style={{
-                    padding: '12px 16px',
-                    borderTop: '1px solid #2e3440',
-                    borderBottom: '1px solid #2e3440',
-                    backgroundColor: '#171c24',
-                    maxHeight: '180px',
-                    overflowY: 'auto'
-                  }}>
-                    <div style={{
-                      fontSize: '11px',
-                      fontWeight: '800',
-                      letterSpacing: '1px',
-                      textTransform: 'uppercase',
-                      color: 'var(--accent-gold, #FFD700)',
-                      marginBottom: '8px'
-                    }}>
-                      🎬 Recent Rooms
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {recentRooms.map(room => (
-                        <button
-                          key={room.code}
-                          onClick={() => handleReenterRoom(room.code, room.name, room.username)}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            width: '100%',
-                            background: '#1f2530',
-                            border: '1px solid #2e3440',
-                            borderRadius: '6px',
-                            padding: '8px 10px',
-                            color: '#e5e7eb',
-                            fontSize: '0.82rem',
-                            fontWeight: '600',
-                            textAlign: 'left',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#E50914'; e.currentTarget.style.backgroundColor = '#232a36'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2e3440'; e.currentTarget.style.backgroundColor = '#1f2530'; }}
-                        >
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>
-                            {room.name}
-                          </span>
-                          <span style={{ fontFamily: 'monospace', color: '#9ca3af', fontSize: '0.78rem' }}>
-                            {room.code}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+
 
                 {/* Profile Actions */}
                  <div className="profile-dropdown-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

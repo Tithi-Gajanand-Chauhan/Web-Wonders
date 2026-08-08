@@ -14,7 +14,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 48px;
+  padding: 14px 24px;
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -71,6 +71,7 @@
   padding: 8px 18px;
   border-radius: var(--radius-pill);
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .nav-link-pill:hover {

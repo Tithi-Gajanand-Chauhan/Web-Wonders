@@ -63,7 +63,7 @@ router.post('/register', async (req, res) => {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = new User({ username: cleanUsername, email: cleanEmail, password: hashedPassword });
+      const newUser = new User({ username: cleanUsername, email: cleanEmail, password: hashedPassword, loginCount: 1 });
       await newUser.save();
 
       const token = jwt.sign({ id: newUser._id }, JWT_SECRET, { expiresIn: '7d' });
@@ -78,7 +78,7 @@ router.post('/register', async (req, res) => {
 
       const hashedPassword = await bcrypt.hash(password, 10);
       const id = Math.random().toString(36).substring(2, 9);
-      const newUser = { id, username: cleanUsername, email: cleanEmail, password: hashedPassword };
+      const newUser = { id, username: cleanUsername, email: cleanEmail, password: hashedPassword, loginCount: 1 };
       
       users[id] = newUser;
       writeJSONUsers(users);
@@ -113,6 +113,13 @@ router.post('/login', async (req, res) => {
         return res.status(400).json({ error: 'Invalid credentials' });
       }
 
+      if (user.loginCount && user.loginCount > 0) {
+        return res.status(400).json({ error: 'This user is already logged in from another device/tab.' });
+      }
+
+      user.loginCount = (user.loginCount || 0) + 1;
+      await user.save();
+
       const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
       return res.json({ token, user: { id: user._id, username: user.username, email: cleanEmail } });
     } else {
@@ -128,12 +135,47 @@ router.post('/login', async (req, res) => {
         return res.status(400).json({ error: 'Invalid credentials' });
       }
 
+      if (user.loginCount && user.loginCount > 0) {
+        return res.status(400).json({ error: 'This user is already logged in from another device/tab.' });
+      }
+
+      user.loginCount = (user.loginCount || 0) + 1;
+      writeJSONUsers(users);
+
       const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '7d' });
       return res.json({ token, user: { id: user.id, username: user.username, email: cleanEmail } });
     }
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Log Out
+router.post('/logout', async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) {
+    return res.status(400).json({ error: 'Missing user details' });
+  }
+
+  try {
+    if (isMongoActive()) {
+      const user = await User.findById(userId);
+      if (user) {
+        user.loginCount = 0;
+        await user.save();
+      }
+    } else {
+      const users = readJSONUsers();
+      if (users[userId]) {
+        users[userId].loginCount = 0;
+        writeJSONUsers(users);
+      }
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Logout error:', err);
+    res.status(500).json({ error: 'Logout failed' });
   }
 });
 

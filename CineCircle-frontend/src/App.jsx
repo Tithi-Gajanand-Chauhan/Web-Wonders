@@ -54,8 +54,17 @@ function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
+      const savedUser = localStorage.getItem('cinecircle_user');
+      const parsedUser = savedUser ? JSON.parse(savedUser) : null;
+      if (parsedUser) {
+        await fetch("http://localhost:5000/api/auth/logout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: parsedUser.id || parsedUser._id })
+        }).catch(err => console.error("Logout request failed:", err));
+      }
       localStorage.removeItem('cinecircle_token');
       localStorage.removeItem('cinecircle_user');
       setToken(null);
@@ -244,6 +253,7 @@ function App() {
         isOpen={isWatchPartyOpen}
         onClose={() => setIsWatchPartyOpen(false)}
         user={user}
+        onOpenAuth={() => setIsAuthOpen(true)}
       />
 
       {/* Authentication Login/Signup Modal */}

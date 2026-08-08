@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import HeroSpotlight from '../components/HeroSpotlight';
-import FilterBar from '../components/FilterBar';
 import TrendingSection from '../components/TrendingSection';
 import MovieRow from '../components/MovieRow';
 
@@ -14,7 +13,6 @@ import {
   getHindiMovies,
   getGujaratiMovies,
   getMarathiMovies,
-  getGenres,
 } from '../services/api';
 
 function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchParty, safeSearch = true }) {
@@ -29,18 +27,13 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
     gujarati: [],
     marathi: [],
   });
-  const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [genreFilter, setGenreFilter] = useState('');
-  const [yearFilter, setYearFilter] = useState('');
-  const [ratingFilter, setRatingFilter] = useState('');
 
   useEffect(() => {
     async function fetchAll() {
       try {
         setLoading(true);
-        const [popular, recent, scifi, animation, korean, chinese, hindi, gujarati, marathi, genreData] = await Promise.all([
+        const [popular, recent, scifi, animation, korean, chinese, hindi, gujarati, marathi] = await Promise.all([
           getPopularMovies(),
           getRecentMovies(),
           getSciFiMovies(),
@@ -50,7 +43,6 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
           getHindiMovies(),
           getGujaratiMovies(),
           getMarathiMovies(),
-          getGenres(),
         ]);
 
         setRows({
@@ -64,7 +56,6 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
           gujarati: gujarati.results || [],
           marathi: marathi.results || [],
         });
-        setGenres(genreData.genres || []);
       } catch (err) {
         console.error('Failed to fetch movies:', err);
       } finally {
@@ -82,12 +73,6 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
         if (movie.adult === true) return false;
         if (movie.age_rating === '18+' || movie.age_rating === 'NC-17') return false;
       }
-      // Genre filter
-      if (genreFilter && !movie.genre_ids?.includes(Number(genreFilter))) return false;
-      // Year filter
-      if (yearFilter && movie.release_date?.split('-')[0] !== yearFilter) return false;
-      // Rating filter
-      if (ratingFilter && movie.vote_average < Number(ratingFilter)) return false;
 
       return true;
     });
@@ -105,7 +90,7 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
       gujarati: applyFilters(rows.gujarati),
       marathi: applyFilters(rows.marathi),
     }),
-    [rows, safeSearch, genreFilter, yearFilter, ratingFilter]
+    [rows, safeSearch]
   );
 
   if (loading) {
@@ -212,16 +197,7 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
           </div>
         </div>
 
-        {/* Consolidated Dropdown Filters */}
-        <FilterBar
-          genres={genres}
-          genreFilter={genreFilter}
-          setGenreFilter={setGenreFilter}
-          yearFilter={yearFilter}
-          setYearFilter={setYearFilter}
-          ratingFilter={ratingFilter}
-          setRatingFilter={setRatingFilter}
-        />
+
 
         {/* Dynamic Trending Tabs: Today Trending, Weekly Trending, Monthly Trending, New Releases */}
         <TrendingSection
