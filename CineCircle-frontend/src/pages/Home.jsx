@@ -163,7 +163,7 @@ function Home({ onPlayTrailer, onToggleWatchlist, isInWatchlist, onOpenWatchPart
             border: "1px solid rgba(255, 255, 255, 0.15)",
           }}
         >
-          <div style={{ flex: "1 1 500px" }}>
+          <div style={{ flex: "1 1 280px" }}>
             <span style={{ fontSize: "11px", fontWeight: "800", letterSpacing: "1.5px", textTransform: "uppercase", color: "#FFD700", display: "block", marginBottom: "6px" }}>
               🍿 Collaborative Group Decision Engine
             </span>
