@@ -6,10 +6,10 @@ const GroupSchema = new mongoose.Schema({
   members: [{ type: String }],
   preferences: [{
     user: { type: String },
-    genres: [{ type: Number }],
-    languages: [{ type: String }],
-    decade: { type: String },
-    providers: [{ type: String }]
+    genres: [{ type: String }],
+    mood: { type: String },
+    language: { type: String },
+    duration: { type: String }
   }],
   votes: { type: mongoose.Schema.Types.Mixed, default: {} },
   locked: { type: Boolean, default: false },
