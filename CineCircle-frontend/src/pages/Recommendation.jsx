@@ -988,15 +988,12 @@ function Recommendation() {
             return (
               <div
                 key={movie.movieId || index}
+                className="recommendation-movie-card"
                 style={{
                   backgroundColor: "#1A1A1A",
                   border: isWinnerMovie ? "2px solid #FFD700" : "1px solid #2B2B2B",
                   borderRadius: "16px",
                   padding: "20px",
-                  display: "flex",
-                  gap: "20px",
-                  flexDirection: "row",
-                  alignItems: "flex-start",
                   boxShadow: isWinnerMovie
                     ? "0 0 20px rgba(255, 215, 0, 0.15)"
                     : "0 4px 16px rgba(0, 0, 0, 0.3)",
@@ -1064,6 +1061,7 @@ function Recommendation() {
                 </div>
 
                 <div
+                  className="recommendation-movie-details"
                   style={{
                     flexGrow: 1,
                     display: "flex",
@@ -1074,12 +1072,7 @@ function Recommendation() {
                 >
                   <div>
                     <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        marginBottom: "8px",
-                      }}
+                      className="recommendation-movie-title-row"
                     >
                       <h3
                         style={{

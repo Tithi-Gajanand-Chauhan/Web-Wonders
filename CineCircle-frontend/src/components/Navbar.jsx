@@ -8,6 +8,7 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const searchRef = useRef(null);
@@ -58,7 +59,7 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
   return (
     <header className="navbar-container">
       <div className="navbar-left">
-        <div className="navbar-brand" onClick={() => navigate('/home')}>
+        <div className="navbar-brand" onClick={() => { navigate('/home'); setIsMobileMenuOpen(false); }}>
           <span className="brand-logo-text">
             <span style={{ color: 'var(--primary-red)' }}>CINE</span>CIRCLE
             <span className="brand-badge">CINEMA</span>
@@ -152,6 +153,7 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
                         setShowDropdown(false);
                         setQuery('');
                         navigate(`/movie/${m.id}`);
+                        setIsMobileMenuOpen(false);
                       }}
                     >
                       <img
@@ -226,6 +228,7 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
                      className="profile-action-btn"
                      onClick={() => {
                        setShowUserDropdown(false);
+                       setIsMobileMenuOpen(false);
                        navigate('/profile');
                      }}
                      style={{
@@ -250,6 +253,7 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
                      className="profile-action-btn logout-btn"
                      onClick={() => {
                        setShowUserDropdown(false);
+                       setIsMobileMenuOpen(false);
                        onLogout();
                      }}
                    >
@@ -262,7 +266,7 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
         ) : (
           <button 
             className="nav-link-pill" 
-            onClick={onOpenAuth}
+            onClick={() => { onOpenAuth(); setIsMobileMenuOpen(false); }}
             style={{
               background: 'var(--primary-red)',
               color: '#fff',
@@ -276,7 +280,84 @@ function Navbar({ watchlistCount = 0, onOpenWatchlist, onOpenWatchParty, safeSea
             Sign In
           </button>
         )}
+
+        {/* Mobile Hamburger Toggle Button */}
+        <button 
+          className={`navbar-hamburger-btn ${isMobileMenuOpen ? 'open' : ''}`}
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle menu"
+        >
+          <span className="hamburger-line"></span>
+          <span className="hamburger-line"></span>
+          <span className="hamburger-line"></span>
+        </button>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {isMobileMenuOpen && (
+        <div className="navbar-mobile-menu">
+          <button
+            className={`mobile-nav-link ${location.pathname === '/home' || location.pathname === '/' ? 'active' : ''}`}
+            onClick={() => {
+              navigate('/home');
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            🏠 Home
+          </button>
+          <button
+            className={`mobile-nav-link ${location.pathname === '/browse' ? 'active' : ''}`}
+            onClick={() => {
+              navigate('/browse');
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            🎬 Movies
+          </button>
+          <button
+            className={`mobile-nav-link ${location.pathname === '/lists' ? 'active' : ''}`}
+            onClick={() => {
+              navigate('/lists');
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            📂 Explore Lists
+          </button>
+          <button 
+            className="mobile-nav-link" 
+            onClick={() => {
+              onOpenWatchlist();
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            📋 My List {watchlistCount > 0 && `(${watchlistCount})`}
+          </button>
+          <button 
+            className="mobile-nav-link" 
+            onClick={() => {
+              onOpenWatchParty();
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            🥳 Watch Party
+          </button>
+          
+          <div className="mobile-menu-divider" />
+          
+          {/* Safe Search Button inside mobile menu */}
+          <button
+            className={`mobile-safe-search-btn ${safeSearch ? 'on' : 'off'}`}
+            onClick={() => {
+              onToggleSafeSearch();
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span>Safe Search: {safeSearch ? 'ON' : 'OFF'}</span>
+          </button>
+        </div>
+      )}
     </header>
   );
 }

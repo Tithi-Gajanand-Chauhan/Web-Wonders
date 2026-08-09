@@ -292,10 +292,10 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist, user }) 
       <div className="detail-content" style={{ maxWidth: '1100px', margin: '-200px auto 60px', padding: '0 32px', position: 'relative', zIndex: 10 }}>
         
         {/* Main 3-Column Layout */}
-        <div style={{ display: 'flex', gap: '36px', alignItems: 'flex-start' }}>
+        <div className="movie-detail-main-layout">
           
           {/* Left Column: Poster & Stream Providers */}
-          <div style={{ width: '260px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="movie-detail-left-col">
             <img
               src={movie.poster_path ? (movie.poster_path.startsWith('/') ? `${IMAGE_BASE_URL}${movie.poster_path}` : movie.poster_path) : 'https://via.placeholder.com/300'}
               alt={movie.title}
@@ -304,7 +304,7 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist, user }) 
           </div>
 
           {/* Middle Column: Details, Cast & Reviews */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '30px' }}>
+          <div className="movie-detail-middle-col">
             <div>
               <h1 className="detail-title" style={{ fontSize: '2.5rem', fontWeight: 800, margin: '0 0 4px 0' }}>
                 {movie.title} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({year})</span>
@@ -673,7 +673,7 @@ function MovieDetail({ onPlayTrailer, onToggleWatchlist, isInWatchlist, user }) 
           </div>
 
           {/* Right Column: Sleek CineCircle Action Sidebar */}
-          <div style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="movie-detail-right-col">
             <div style={{
               backgroundColor: '#161920',
               border: '1px solid #2b303c',

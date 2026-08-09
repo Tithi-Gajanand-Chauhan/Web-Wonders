@@ -207,7 +207,7 @@ function WatchlistModal({ isOpen, onClose, watchlist, onRemoveFromWatchlist, onP
         </div>
 
         {/* Tabs */}
-        <div style={{
+        <div className="drawer-tabs" style={{
           display: 'flex',
           borderBottom: '1px solid #2e3440',
           marginBottom: '16px',
