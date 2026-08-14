@@ -4,6 +4,9 @@
 
 Developed as part of Web Wonders 2026 under the Media & Entertainment theme, CineCircle is an AI-powered entertainment discovery and collaborative movie selection platform.
 
+🔗 **Live Deployment:** [https://cinecircle-zahg.onrender.com](https://cinecircle-zahg.onrender.com)
+
+
 Instead of showing generic trending content, CineCircle focuses on personalized and group-based discovery to solve the problem of decision fatigue:
 * **For the individual:** CineCircle offers a cinematic space where users can explore curated categories, search and sort watchlist collections, track screens watch time, and get detailed analytics on their favorite film genres. In addition, an individual can create a watch party solo to generate AI-powered recommendations tailored strictly to their own mood, language, and genre preferences.
 * **For groups of friends and family:** CineCircle allows users to create virtual Watch Parties. Group members enter their genre, language, and current mood preferences. The platform uses a compatibility algorithm based on preference overlap to generate group recommendations. Members can then vote in real-time to decide what to watch.
